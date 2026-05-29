@@ -16,10 +16,15 @@ export const userEntitySchema = z.object({
   deletedAt: z.date().nullish().describe('The date when the user was deleted'),
 });
 
-export const serializedUserSchema = userEntitySchema.omit({
-  password: true,
-  googleId: true,
-});
+export const serializedUserSchema = userEntitySchema
+  .omit({
+    password: true,
+    googleId: true,
+  })
+  .transform((user) => ({
+    ...user,
+    displayName: user.displayName ?? user.username,
+  }));
 
 /** Create User Schemas */
 
