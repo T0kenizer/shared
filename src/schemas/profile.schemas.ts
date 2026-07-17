@@ -17,6 +17,8 @@ export const updateProfileSchema = z.object({
       message: 'Username must only contain letters, numbers and underscores',
     })
     .optional(),
+  email: z.email().optional(),
+  avatarUrl: z.url().nullish(),
 });
 
 export const changePasswordSchema = z.object({
