@@ -1,4 +1,4 @@
-import * as Schemas from '@schemas/user-deletions.schemas';
+import * as Schemas from '@schemas/account-deletions.schemas';
 import { z } from 'zod';
 
 /** Request Deletion Types */
