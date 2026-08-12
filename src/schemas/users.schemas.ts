@@ -14,6 +14,10 @@ export const userEntitySchema = z.object({
   createdAt: z.date().describe('The date when the user was created'),
   updatedAt: z.date().describe('The date when the user was last updated'),
   deletedAt: z.date().nullish().describe('The date when the user was deleted'),
+  confirmedAt: z
+    .date()
+    .nullish()
+    .describe('The date when the user confirmed their email address'),
 });
 
 export const serializedUserSchema = userEntitySchema
@@ -26,9 +30,10 @@ export const serializedUserSchema = userEntitySchema
     displayName: user.displayName ?? user.username,
   }));
 
-/** Create User Schemas */
+/** User Input Schemas */
 
-export const createUserDataSchema = z.object({
+// Shared by every write endpoint so a field is only ever validated one way.
+export const userInputSchema = z.object({
   username: z
     .string()
     .min(Constants.USERNAME_MIN_LENGTH)
@@ -37,11 +42,51 @@ export const createUserDataSchema = z.object({
       message: 'Username must only contain letters, numbers and underscores',
     })
     .describe('The username of the user'),
-  email: z.email().describe('The email of the user'),
+  displayName: z
+    .string()
+    .min(1)
+    .max(Constants.DISPLAY_NAME_MAX_LENGTH)
+    .describe('The display name of the user'),
+  email: z
+    .email()
+    .max(Constants.EMAIL_MAX_LENGTH)
+    .describe('The email of the user'),
+  avatarUrl: z
+    .url()
+    .max(Constants.AVATAR_URL_MAX_LENGTH)
+    .describe('The avatar URL of the user'),
   password: z
     .string()
     .min(Constants.PASSWORD_MIN_LENGTH)
     .max(Constants.PASSWORD_MAX_LENGTH)
     .describe('The password of the user'),
 });
+
+/** Create User Schemas */
+
+export const createUserDataSchema = userInputSchema.pick({
+  username: true,
+  email: true,
+  password: true,
+});
 export const createUserResponseSchema = serializedUserSchema;
+
+/** Partial Update User Schemas */
+
+export const partialUpdateUserDataSchema = userInputSchema
+  .pick({
+    username: true,
+    displayName: true,
+    email: true,
+    avatarUrl: true,
+    password: true,
+  })
+  .extend({
+    displayName: userInputSchema.shape.displayName.nullable(),
+    avatarUrl: userInputSchema.shape.avatarUrl.nullable(),
+  })
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided',
+  });
+export const partialUpdateUserResponseSchema = serializedUserSchema;
