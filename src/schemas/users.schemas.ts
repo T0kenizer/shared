@@ -14,6 +14,10 @@ export const userEntitySchema = z.object({
   createdAt: z.date().describe('The date when the user was created'),
   updatedAt: z.date().describe('The date when the user was last updated'),
   deletedAt: z.date().nullish().describe('The date when the user was deleted'),
+  confirmedAt: z
+    .date()
+    .nullish()
+    .describe('The date when the user confirmed their email address'),
 });
 
 export const serializedUserSchema = userEntitySchema
