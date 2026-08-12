@@ -79,6 +79,7 @@ export const partialUpdateUserDataSchema = userInputSchema
     displayName: true,
     email: true,
     avatarUrl: true,
+    password: true,
   })
   .extend({
     displayName: userInputSchema.shape.displayName.nullable(),
