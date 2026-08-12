@@ -15,3 +15,12 @@ export type CreateUserData = z.infer<typeof Schemas.createUserDataSchema>;
 export type CreateUserResponse = z.infer<
   typeof Schemas.createUserResponseSchema
 >;
+
+/** Partial Update User Types */
+
+export type PartialUpdateUserData = z.infer<
+  typeof Schemas.partialUpdateUserDataSchema
+>;
+export type PartialUpdateUserResponse = z.infer<
+  typeof Schemas.partialUpdateUserResponseSchema
+>;
