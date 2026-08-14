@@ -20,14 +20,12 @@ export const userEntitySchema = z.object({
     .describe('The date when the user confirmed their email address'),
 });
 
-export const serializedUserSchema = userEntitySchema.transform(
-  ({ password, googleId, ...user }) => ({
+export const serializedUserSchema = userEntitySchema
+  .omit({ password: true, googleId: true })
+  .transform((user) => ({
     ...user,
     displayName: user.displayName ?? user.username,
-    hasPassword: !!password,
-    hasGoogleId: !!googleId,
-  }),
-);
+  }));
 
 /** User Input Schemas */
 
