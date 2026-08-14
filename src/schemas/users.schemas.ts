@@ -21,10 +21,7 @@ export const userEntitySchema = z.object({
 });
 
 export const serializedUserSchema = userEntitySchema
-  .omit({
-    password: true,
-    googleId: true,
-  })
+  .omit({ password: true, googleId: true })
   .transform((user) => ({
     ...user,
     displayName: user.displayName ?? user.username,
