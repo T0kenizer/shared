@@ -32,7 +32,6 @@ export const serializedUserSchema = userEntitySchema
     return {
       ...user,
       displayName: user.displayName ?? user.username,
-      avatar: avatarUuid ?? null,
       avatarUrl: avatarUuid ? buildFileUrl(avatarUuid) : null,
     };
   });
