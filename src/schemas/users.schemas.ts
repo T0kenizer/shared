@@ -1,6 +1,7 @@
 import { UserRole } from '@/types/users.types';
 import * as Constants from '@constants/users.constants';
 import { buildFileUrl, fileEntitySchema } from '@schemas/files.schemas';
+import { loadableRelation } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
 export const userEntitySchema = z.object({
@@ -10,8 +11,7 @@ export const userEntitySchema = z.object({
   email: z.email().describe('The email of the user'),
   password: z.string().nullish().describe('The password of the user'),
   googleId: z.string().nullish().describe('The Google account id of the user'),
-  avatar: z
-    .union([z.uuid(), fileEntitySchema])
+  avatar: loadableRelation(fileEntitySchema)
     .nullish()
     .describe('The avatar file of the user (uuid, or the file when loaded)'),
   role: z.enum(UserRole).describe('The role of the user'),

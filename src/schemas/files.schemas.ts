@@ -1,4 +1,5 @@
 import { FileStatus, FileUploadMode } from '@/types/files.types';
+import { loadableRelation } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
 export const fileEntitySchema = z.object({
@@ -15,8 +16,7 @@ export const fileEntitySchema = z.object({
     .nullish()
     .describe('The sha256 checksum of the file'),
   status: z.enum(FileStatus).describe('The processing status of the file'),
-  createdBy: z
-    .union([z.uuid(), z.object({ uuid: z.uuid() })])
+  createdBy: loadableRelation(z.object({ uuid: z.uuid() }))
     .nullish()
     .describe('The uploader of the file (uuid, or the user when loaded)'),
   createdAt: z.date().describe('The date when the file was created'),
