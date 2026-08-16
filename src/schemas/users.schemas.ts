@@ -1,5 +1,7 @@
 import { UserRole } from '@/types/users.types';
 import * as Constants from '@constants/users.constants';
+import { buildFileUrl, fileEntitySchema } from '@schemas/files.schemas';
+import { loadableRelation } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
 export const userEntitySchema = z.object({
@@ -9,7 +11,9 @@ export const userEntitySchema = z.object({
   email: z.email().describe('The email of the user'),
   password: z.string().nullish().describe('The password of the user'),
   googleId: z.string().nullish().describe('The Google account id of the user'),
-  avatarUrl: z.string().nullish().describe('The avatar URL of the user'),
+  avatar: loadableRelation(fileEntitySchema)
+    .nullish()
+    .describe('The avatar file of the user (uuid, or the file when loaded)'),
   role: z.enum(UserRole).describe('The role of the user'),
   createdAt: z.date().describe('The date when the user was created'),
   updatedAt: z.date().describe('The date when the user was last updated'),
@@ -22,10 +26,15 @@ export const userEntitySchema = z.object({
 
 export const serializedUserSchema = userEntitySchema
   .omit({ password: true, googleId: true })
-  .transform((user) => ({
-    ...user,
-    displayName: user.displayName ?? user.username,
-  }));
+  .transform(({ avatar, ...user }) => {
+    const avatarUuid = typeof avatar === 'string' ? avatar : avatar?.uuid;
+
+    return {
+      ...user,
+      displayName: user.displayName ?? user.username,
+      avatarUrl: avatarUuid ? buildFileUrl(avatarUuid) : null,
+    };
+  });
 
 /** User Input Schemas */
 
@@ -48,10 +57,6 @@ export const userInputSchema = z.object({
     .email()
     .max(Constants.EMAIL_MAX_LENGTH)
     .describe('The email of the user'),
-  avatarUrl: z
-    .url()
-    .max(Constants.AVATAR_URL_MAX_LENGTH)
-    .describe('The avatar URL of the user'),
   password: z
     .string()
     .min(Constants.PASSWORD_MIN_LENGTH)
@@ -75,12 +80,14 @@ export const partialUpdateUserDataSchema = userInputSchema
     username: true,
     displayName: true,
     email: true,
-    avatarUrl: true,
     password: true,
   })
   .extend({
     displayName: userInputSchema.shape.displayName.nullable(),
-    avatarUrl: userInputSchema.shape.avatarUrl.nullable(),
+    avatar: z
+      .uuid()
+      .nullable()
+      .describe('The uuid of the avatar file (null to remove the avatar)'),
   })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
