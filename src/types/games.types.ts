@@ -50,10 +50,16 @@ export enum GameSessionStatus {
   Finished = 'FINISHED',
 }
 
+export enum ParticipantRole {
+  Host = 'HOST',
+  Player = 'PLAYER',
+}
+
 export enum ParticipantStatus {
   Active = 'ACTIVE',
   Folded = 'FOLDED',
   Eliminated = 'ELIMINATED',
+  /** The seat exists but nobody has claimed it yet. */
   Waiting = 'WAITING',
 }
 
@@ -68,6 +74,7 @@ export enum RoundStatus {
 export type ActionDef = z.infer<typeof Schemas.actionDefSchema>;
 export type ForcedBet = z.infer<typeof Schemas.forcedBetSchema>;
 export type EconomyPolicy = z.infer<typeof Schemas.economyPolicySchema>;
+export type SeatingPolicy = z.infer<typeof Schemas.seatingPolicySchema>;
 export type TurnPolicy = z.infer<typeof Schemas.turnPolicySchema>;
 export type EndCondition = z.infer<typeof Schemas.endConditionSchema>;
 export type EndPolicy = z.infer<typeof Schemas.endPolicySchema>;
@@ -99,15 +106,10 @@ export type RetrieveGameSessionResponse = z.infer<
   typeof Schemas.retrieveGameSessionResponseSchema
 >;
 
-/** Join Game Session Types */
+/** Claim Seat Types */
 
-// z.input keeps `initialBalance` optional on the client; the schema defaults it.
-export type JoinGameSessionData = z.input<
-  typeof Schemas.joinGameSessionDataSchema
->;
-export type JoinGameSessionResponse = z.infer<
-  typeof Schemas.joinGameSessionResponseSchema
->;
+export type ClaimSeatData = z.infer<typeof Schemas.claimSeatDataSchema>;
+export type ClaimSeatResponse = z.infer<typeof Schemas.claimSeatResponseSchema>;
 
 /** Start Round Types */
 

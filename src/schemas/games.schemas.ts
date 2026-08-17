@@ -4,6 +4,7 @@ import {
   Direction,
   EndResolution,
   GameSessionStatus,
+  ParticipantRole,
   ParticipantStatus,
   PayoutMode,
   PotMode,
@@ -48,6 +49,31 @@ export const economyPolicySchema = z.object({
   payoutMode: z.enum(PayoutMode).describe('How the pot is paid out'),
 });
 
+/**
+ * Seats are declared up front: creating a session creates `count` participants
+ * (seat 0 is the host's), which players then claim to take part.
+ */
+export const seatingPolicySchema = z.object({
+  count: z
+    .number()
+    .int()
+    .min(2)
+    .max(32)
+    .describe('How many seats the session opens with (host seat included)'),
+  initialBalance: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('The starting balance of every seat'),
+  allowMidGameClaims: z
+    .boolean()
+    .default(true)
+    .describe(
+      'Whether free seats can still be claimed once the game has started; ' +
+        'reconnections of seated players are always allowed',
+    ),
+});
+
 export const turnPolicySchema = z.object({
   regime: z.enum(TurnRegime).describe('How turns are taken'),
   direction: z.enum(Direction).describe('The rotation direction'),
@@ -75,6 +101,7 @@ export const endPolicySchema = z.object({
 });
 
 export const gameConfigSchema = z.object({
+  seating: seatingPolicySchema,
   economy: economyPolicySchema,
   actionCatalog: z
     .array(actionDefSchema)
@@ -87,8 +114,12 @@ export const gameConfigSchema = z.object({
 /** Game Snapshot Schemas */
 
 export const participantSnapshotSchema = z.object({
-  id: z.uuid().describe('The runtime identifier of the participant'),
-  displayName: z.string().describe('The display name of the participant'),
+  id: z.uuid().describe('The identifier of the participant (seat)'),
+  role: z.enum(ParticipantRole).describe('The role of the seat'),
+  displayName: z
+    .string()
+    .nullable()
+    .describe('The display name of the participant; null until claimed'),
   balance: z.number().int().describe('The current balance of the participant'),
   seatIndex: z
     .number()
@@ -98,7 +129,8 @@ export const participantSnapshotSchema = z.object({
   status: z.enum(ParticipantStatus).describe('The status of the participant'),
   controller: z
     .string()
-    .describe('The external identity controlling the participant'),
+    .nullable()
+    .describe('The external identity controlling the seat; null until claimed'),
 });
 
 export const potSnapshotSchema = z.object({
@@ -157,9 +189,6 @@ export const roundResolutionSchema = z.object({
     .enum(['LAST_PLAYER_STANDING', 'MANUAL_HOST'])
     .describe('Why the round settled'),
   winners: z.array(z.uuid()).describe('The participants awarded the pot'),
-  debugFile: z
-    .string()
-    .describe('Server-side debug artefact of the resolution (POC)'),
 });
 
 /** Create Game Session Schemas */
@@ -175,9 +204,9 @@ export const createGameSessionResponseSchema = gameSnapshotSchema;
 
 export const retrieveGameSessionResponseSchema = gameSnapshotSchema;
 
-/** Join Game Session Schemas */
+/** Claim Seat Schemas */
 
-export const joinGameSessionDataSchema = z.object({
+export const claimSeatDataSchema = z.object({
   externalId: z
     .string()
     .min(1)
@@ -187,14 +216,14 @@ export const joinGameSessionDataSchema = z.object({
     .min(1)
     .max(60)
     .describe('The display name of the participant'),
-  initialBalance: z
+  seatIndex: z
     .number()
     .int()
     .nonnegative()
-    .default(1000)
-    .describe('The starting balance of the participant'),
+    .optional()
+    .describe('The seat to claim; omit to take the first free seat'),
 });
-export const joinGameSessionResponseSchema = gameSnapshotSchema;
+export const claimSeatResponseSchema = gameSnapshotSchema;
 
 /** Start Round Schemas */
 
