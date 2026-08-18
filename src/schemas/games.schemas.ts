@@ -50,21 +50,41 @@ export const economyPolicySchema = z.object({
 });
 
 /**
- * Seats are declared up front: creating a session creates `count` participants
- * (seat 0 is the host's), which players then claim to take part.
+ * A single declared seat: its default (pre-claim) name and starting balance.
+ * The host acts on behalf of a seat until a player claims it.
  */
-export const seatingPolicySchema = z.object({
-  count: z
-    .number()
-    .int()
-    .min(2)
-    .max(32)
-    .describe('How many seats the session opens with (host seat included)'),
+export const seatDeclarationSchema = z.object({
+  displayName: z
+    .string()
+    .min(1)
+    .max(60)
+    .describe('The default display name, shown until the seat is claimed'),
   initialBalance: z
     .number()
     .int()
     .nonnegative()
-    .describe('The starting balance of every seat'),
+    .optional()
+    .describe(
+      'Starting balance for this seat; omit to use the session default',
+    ),
+});
+
+/**
+ * Seats are declared up front: creating a session creates one participant per
+ * entry in `seats` (seat 0 is the host's), which players then claim to take
+ * part — the host acts on behalf of any seat nobody has claimed yet.
+ */
+export const seatingPolicySchema = z.object({
+  seats: z
+    .array(seatDeclarationSchema)
+    .min(2)
+    .max(32)
+    .describe('The seats the session opens with (host seat included)'),
+  defaultInitialBalance: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('The starting balance of a seat that does not set its own'),
   allowMidGameClaims: z
     .boolean()
     .default(true)
@@ -113,13 +133,25 @@ export const gameConfigSchema = z.object({
 
 /** Game Snapshot Schemas */
 
+export const buildSeatPhotoUrl = (gameUuid: string, participantId: string) =>
+  `/games/${gameUuid}/participants/${participantId}/photo`;
+
 export const participantSnapshotSchema = z.object({
   id: z.uuid().describe('The identifier of the participant (seat)'),
   role: z.enum(ParticipantRole).describe('The role of the seat'),
   displayName: z
     .string()
+    .describe(
+      'The name shown for the seat: an explicit override, else the ' +
+        "claiming account's name, else the config default",
+    ),
+  photoUrl: z
+    .string()
     .nullable()
-    .describe('The display name of the participant; null until claimed'),
+    .describe(
+      'URL to fetch the seat photo from (an explicit override, else the ' +
+        "claiming account's avatar); null if neither is set",
+    ),
   balance: z.number().int().describe('The current balance of the participant'),
   seatIndex: z
     .number()
@@ -172,8 +204,18 @@ export const roundSnapshotSchema = z.object({
     .describe('The actions applied during the round'),
 });
 
+/** 6-char room code, e.g. shared as an invite ("ABC123"). */
+export const joinCodeSchema = z
+  .string()
+  .length(6)
+  .transform((value) => value.toUpperCase());
+
 export const gameSnapshotSchema = z.object({
   id: z.uuid().describe('The unique identifier of the game session'),
+  joinCode: z
+    .string()
+    .length(6)
+    .describe('The 6-character code used to join the room'),
   status: z.enum(GameSessionStatus).describe('The status of the game session'),
   participants: z
     .array(participantSnapshotSchema)
@@ -204,6 +246,17 @@ export const createGameSessionResponseSchema = gameSnapshotSchema;
 
 export const retrieveGameSessionResponseSchema = gameSnapshotSchema;
 
+/**
+ * Raw image data captured live from the camera (no upload endpoint — this POC
+ * carries it inline). Data-URL string, capped well under typical webcam-frame
+ * JPEG sizes.
+ */
+export const seatPhotoSchema = z
+  .string()
+  .max(2_000_000)
+  .regex(/^data:image\/(png|jpeg);base64,/)
+  .describe('A data-URL encoded PNG/JPEG, captured live from the camera');
+
 /** Claim Seat Schemas */
 
 export const claimSeatDataSchema = z.object({
@@ -215,7 +268,16 @@ export const claimSeatDataSchema = z.object({
     .string()
     .min(1)
     .max(60)
-    .describe('The display name of the participant'),
+    .optional()
+    .describe(
+      'Explicit display name override; omit to fall back to the account ' +
+        "name (if externalId is one) or the seat's config default",
+    ),
+  photo: seatPhotoSchema
+    .optional()
+    .describe(
+      'Explicit seat photo override; omit to fall back to the account avatar',
+    ),
   seatIndex: z
     .number()
     .int()
@@ -224,6 +286,33 @@ export const claimSeatDataSchema = z.object({
     .describe('The seat to claim; omit to take the first free seat'),
 });
 export const claimSeatResponseSchema = gameSnapshotSchema;
+
+/** Update Seat Schemas */
+
+export const updateSeatDataSchema = z.object({
+  externalId: z
+    .string()
+    .min(1)
+    .describe('The external identity of the seat being updated'),
+  displayName: z
+    .string()
+    .min(1)
+    .max(60)
+    .nullable()
+    .optional()
+    .describe(
+      'New display name override; null clears it (falls back to the ' +
+        'account/config default), omit to leave it unchanged',
+    ),
+  photo: seatPhotoSchema
+    .nullable()
+    .optional()
+    .describe(
+      'New seat photo override; null clears it (falls back to the account ' +
+        'avatar), omit to leave it unchanged',
+    ),
+});
+export const updateSeatResponseSchema = gameSnapshotSchema;
 
 /** Start Round Schemas */
 
@@ -236,6 +325,13 @@ export const submitActionDataSchema = z.object({
     .string()
     .min(1)
     .describe('The external identity of the acting participant'),
+  targetParticipantId: z
+    .uuid()
+    .optional()
+    .describe(
+      'Host only: the unclaimed seat to act on behalf of. Omit to act on ' +
+        "the caller's own seat; rejected if the seat is already claimed.",
+    ),
   definitionId: z.string().min(1).describe('The action definition to apply'),
   amount: z
     .number()

@@ -111,6 +111,13 @@ export type RetrieveGameSessionResponse = z.infer<
 export type ClaimSeatData = z.infer<typeof Schemas.claimSeatDataSchema>;
 export type ClaimSeatResponse = z.infer<typeof Schemas.claimSeatResponseSchema>;
 
+/** Update Seat Types */
+
+export type UpdateSeatData = z.infer<typeof Schemas.updateSeatDataSchema>;
+export type UpdateSeatResponse = z.infer<
+  typeof Schemas.updateSeatResponseSchema
+>;
+
 /** Start Round Types */
 
 export type StartRoundResponse = z.infer<
