@@ -128,6 +128,9 @@ export type PublicRoomView = z.infer<typeof Schemas.publicRoomViewSchema>;
 export type RetrieveRoomByCodeResponse = z.infer<
   typeof Schemas.retrieveRoomByCodeResponseSchema
 >;
+export type RetrieveRoomResponse = z.infer<
+  typeof Schemas.retrieveRoomResponseSchema
+>;
 
 /** Claim Seat Types */
 

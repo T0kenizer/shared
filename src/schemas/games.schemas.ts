@@ -322,6 +322,15 @@ export const publicRoomViewSchema = z.object({
 });
 export const retrieveRoomByCodeResponseSchema = publicRoomViewSchema;
 
+/**
+ * The same public view, reached by uuid instead of a code — the shape a client
+ * that already holds the uuid (a join link, a scanned QR) needs to confirm the
+ * room before committing to it. Unlike `GET /games/:uuid` it neither opens the
+ * room nor exposes seats, so it is safe to call from an unauthenticated
+ * screen.
+ */
+export const retrieveRoomResponseSchema = publicRoomViewSchema;
+
 /** Retrieve Game Session Schemas */
 
 export const retrieveGameSessionResponseSchema = gameSnapshotSchema;
