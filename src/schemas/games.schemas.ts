@@ -331,6 +331,22 @@ export const retrieveRoomByCodeResponseSchema = publicRoomViewSchema;
  */
 export const retrieveRoomResponseSchema = publicRoomViewSchema;
 
+/**
+ * The join link a QR code carries. It holds the session uuid, so scanning it
+ * lands on the join screen with the code step already behind it — the code and
+ * the QR are two ways to reach the same uuid, never two different rooms.
+ */
+export const buildGameJoinPath = (gameUuid: string): string =>
+  `/game/join/${gameUuid}`;
+
+/**
+ * Content route of a room's join QR. Served like a file's content — an image
+ * behind a uuid, cacheable forever — so clients point an `<img>` straight at it
+ * rather than carrying bytes through JSON.
+ */
+export const buildGameQrUrl = (gameUuid: string): string =>
+  `/games/${gameUuid}/qrcode`;
+
 /** Retrieve Game Session Schemas */
 
 export const retrieveGameSessionResponseSchema = gameSnapshotSchema;
