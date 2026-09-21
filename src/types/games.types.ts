@@ -48,6 +48,8 @@ export enum GameSessionStatus {
   Lobby = 'LOBBY',
   Running = 'RUNNING',
   Finished = 'FINISHED',
+  /** Closed by the lifecycle queue because the room emptied out. */
+  Abandoned = 'ABANDONED',
 }
 
 export enum ParticipantRole {
@@ -106,8 +108,30 @@ export type RetrieveGameSessionResponse = z.infer<
   typeof Schemas.retrieveGameSessionResponseSchema
 >;
 
+/** Socket Attach Types */
+
+export type AttachSocketData = z.infer<typeof Schemas.attachSocketDataSchema>;
+export type AttachSocketResponse = z.infer<
+  typeof Schemas.attachSocketResponseSchema
+>;
+
+/** Join By Code Types */
+
+export type JoinByCodeData = z.infer<typeof Schemas.joinByCodeDataSchema>;
+export type JoinByCodeResponse = z.infer<
+  typeof Schemas.joinByCodeResponseSchema
+>;
+
+/** Public Room View Types */
+
+export type PublicRoomView = z.infer<typeof Schemas.publicRoomViewSchema>;
+export type RetrieveRoomByCodeResponse = z.infer<
+  typeof Schemas.retrieveRoomByCodeResponseSchema
+>;
+
 /** Claim Seat Types */
 
+export type PlayerToken = z.infer<typeof Schemas.playerTokenSchema>;
 export type ClaimSeatData = z.infer<typeof Schemas.claimSeatDataSchema>;
 export type ClaimSeatResponse = z.infer<typeof Schemas.claimSeatResponseSchema>;
 

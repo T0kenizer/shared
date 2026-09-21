@@ -3,8 +3,7 @@
  * validated server-side against the schemas in `schemas/games.schemas.ts`.
  */
 export const GAME_CLIENT_MESSAGES = {
-  CREATE: 'game:create',
-  JOIN: 'game:join',
+  ATTACH: 'game:attach',
   UPDATE_SEAT: 'game:update_seat',
   START_ROUND: 'game:start_round',
   ACTION: 'game:action',
@@ -21,5 +20,7 @@ export const GAME_SERVER_EVENTS = {
   ACTION_APPLIED: 'game:action_applied',
   ROUND_RESOLVED: 'game:round_resolved',
   SESSION_CLOSED: 'game:session_closed',
+  PARTICIPANT_DISCONNECTED: 'game:participant_disconnected',
+  PARTICIPANT_LEFT: 'game:participant_left',
   ERROR: 'game:error',
 } as const;

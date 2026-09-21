@@ -133,9 +133,6 @@ export const gameConfigSchema = z.object({
 
 /** Game Snapshot Schemas */
 
-export const buildSeatPhotoUrl = (gameUuid: string, participantId: string) =>
-  `/games/${gameUuid}/participants/${participantId}/photo`;
-
 export const participantSnapshotSchema = z.object({
   id: z.uuid().describe('The identifier of the participant (seat)'),
   role: z.enum(ParticipantRole).describe('The role of the seat'),
@@ -149,8 +146,8 @@ export const participantSnapshotSchema = z.object({
     .string()
     .nullable()
     .describe(
-      'URL to fetch the seat photo from (an explicit override, else the ' +
-        "claiming account's avatar); null if neither is set",
+      "URL of the claiming account's avatar; null for an anonymous or " +
+        'unclaimed seat',
     ),
   balance: z.number().int().describe('The current balance of the participant'),
   seatIndex: z
@@ -159,10 +156,20 @@ export const participantSnapshotSchema = z.object({
     .nonnegative()
     .describe('The seat of the participant'),
   status: z.enum(ParticipantStatus).describe('The status of the participant'),
-  controller: z
-    .string()
-    .nullable()
-    .describe('The external identity controlling the seat; null until claimed'),
+  connected: z
+    .boolean()
+    .describe(
+      'Whether the seat holder has a live socket in the room. Derived from ' +
+        'the socket rooms, not stored: a player inside their reconnection ' +
+        'grace period reads as claimed but not connected.',
+    ),
+  claimed: z
+    .boolean()
+    .describe(
+      'Whether a player currently holds the seat. The identity itself is ' +
+        'never broadcast: a client recognises its own seat through the ' +
+        'participantId carried by its player token.',
+    ),
 });
 
 export const potSnapshotSchema = z.object({
@@ -204,18 +211,26 @@ export const roundSnapshotSchema = z.object({
     .describe('The actions applied during the round'),
 });
 
-/** 6-char room code, e.g. shared as an invite ("ABC123"). */
+/**
+ * The 6-digit room code, readable aloud over a call. It is a lookup key only:
+ * it never reaches the database, lives in Redis under a sliding TTL, and
+ * resolves to the session uuid that everything else is keyed by.
+ */
 export const joinCodeSchema = z
   .string()
-  .length(6)
-  .transform((value) => value.toUpperCase());
+  .regex(/^\d{6}$/, 'The join code is 6 digits');
 
 export const gameSnapshotSchema = z.object({
   id: z.uuid().describe('The unique identifier of the game session'),
+  name: z.string().describe('The display name of the game session'),
   joinCode: z
     .string()
-    .length(6)
-    .describe('The 6-character code used to join the room'),
+    .regex(/^\d{6}$/)
+    .nullable()
+    .describe(
+      'The 6-digit code currently resolving to this room; null once it has ' +
+        'expired. The room itself stays reachable by uuid.',
+    ),
   status: z.enum(GameSessionStatus).describe('The status of the game session'),
   participants: z
     .array(participantSnapshotSchema)
@@ -236,34 +251,98 @@ export const roundResolutionSchema = z.object({
 /** Create Game Session Schemas */
 
 export const createGameSessionDataSchema = z.object({
+  name: z
+    .string()
+    .min(1)
+    .max(60)
+    .optional()
+    .describe('The display name of the game; omit for a generated one'),
   config: gameConfigSchema
     .optional()
     .describe('The game config; omit it to use the server default preset'),
 });
-export const createGameSessionResponseSchema = gameSnapshotSchema;
+/**
+ * Creating a game seats the owner in the HOST seat, so it answers exactly as a
+ * join does — snapshot, token, and the seat the caller now holds.
+ */
+export const createGameSessionResponseSchema = z.object({
+  snapshot: gameSnapshotSchema,
+  token: z.string().min(1),
+  participantId: z.uuid(),
+});
+
+/** Socket Attach Schemas */
+
+export const attachSocketDataSchema = z.object({
+  gameUuid: z.uuid().describe('The session the socket is binding to'),
+  token: z.string().min(1).describe('The player token issued by the REST join'),
+});
+
+/**
+ * The ack of an attach. It repeats the seat the token names, so a client that
+ * came back from a refresh knows which chair is its own without having to
+ * unpack the token itself.
+ */
+export const attachSocketResponseSchema = z.object({
+  snapshot: gameSnapshotSchema,
+  participantId: z.uuid(),
+});
+
+/** Join By Code Schemas */
+
+export const joinByCodeDataSchema = z.object({
+  code: joinCodeSchema.describe('The 6-digit code dictated by the host'),
+});
+
+/**
+ * Nothing but the uuid: resolving a code hands the client the permanent
+ * identifier, and every subsequent call (REST or socket) is keyed by it.
+ */
+export const joinByCodeResponseSchema = z.object({
+  gameUuid: z.uuid().describe('The session the code resolves to'),
+});
+
+/** Public Room View Schemas */
+
+/**
+ * What a stranger holding a code may see before committing to the room: enough
+ * to confirm they are about to join the right game, and nothing that belongs to
+ * a player. Deliberately excludes the session uuid — resolving a code to a uuid
+ * is `POST /games/join-by-code`, which is rate-limited.
+ */
+export const publicRoomViewSchema = z.object({
+  name: z.string().describe('The display name of the game'),
+  status: z.enum(GameSessionStatus).describe('The status of the game session'),
+  playerCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('How many seats are currently claimed'),
+  seatCount: z.number().int().nonnegative().describe('How many seats exist'),
+});
+export const retrieveRoomByCodeResponseSchema = publicRoomViewSchema;
 
 /** Retrieve Game Session Schemas */
 
 export const retrieveGameSessionResponseSchema = gameSnapshotSchema;
 
-/**
- * Raw image data captured live from the camera (no upload endpoint — this POC
- * carries it inline). Data-URL string, capped well under typical webcam-frame
- * JPEG sizes.
- */
-export const seatPhotoSchema = z
-  .string()
-  .max(2_000_000)
-  .regex(/^data:image\/(png|jpeg);base64,/)
-  .describe('A data-URL encoded PNG/JPEG, captured live from the camera');
-
 /** Claim Seat Schemas */
 
+export const playerTokenSchema = z
+  .string()
+  .min(1)
+  .describe(
+    'Signed player token binding a participant to a session. Issued on a ' +
+      'successful join and replayed to reconnect or to authenticate an action.',
+  );
+
 export const claimSeatDataSchema = z.object({
-  externalId: z
-    .string()
-    .min(1)
-    .describe('Authenticated user uuid or an anonymous client id'),
+  token: playerTokenSchema
+    .optional()
+    .describe(
+      'A token issued earlier for this session; present it to reclaim the ' +
+        'same seat after a refresh or a dropped connection',
+    ),
   displayName: z
     .string()
     .min(1)
@@ -271,12 +350,7 @@ export const claimSeatDataSchema = z.object({
     .optional()
     .describe(
       'Explicit display name override; omit to fall back to the account ' +
-        "name (if externalId is one) or the seat's config default",
-    ),
-  photo: seatPhotoSchema
-    .optional()
-    .describe(
-      'Explicit seat photo override; omit to fall back to the account avatar',
+        "name (when signed in) or the seat's config default",
     ),
   seatIndex: z
     .number()
@@ -285,15 +359,22 @@ export const claimSeatDataSchema = z.object({
     .optional()
     .describe('The seat to claim; omit to take the first free seat'),
 });
-export const claimSeatResponseSchema = gameSnapshotSchema;
+
+/**
+ * A join hands back the token the client must keep: it is the only proof that
+ * it owns its seat, and the only way back into it after a reconnection.
+ */
+export const claimSeatResponseSchema = z.object({
+  snapshot: gameSnapshotSchema,
+  token: playerTokenSchema,
+  participantId: z
+    .uuid()
+    .describe('The seat the caller now holds, as it appears in the snapshot'),
+});
 
 /** Update Seat Schemas */
 
 export const updateSeatDataSchema = z.object({
-  externalId: z
-    .string()
-    .min(1)
-    .describe('The external identity of the seat being updated'),
   displayName: z
     .string()
     .min(1)
@@ -303,13 +384,6 @@ export const updateSeatDataSchema = z.object({
     .describe(
       'New display name override; null clears it (falls back to the ' +
         'account/config default), omit to leave it unchanged',
-    ),
-  photo: seatPhotoSchema
-    .nullable()
-    .optional()
-    .describe(
-      'New seat photo override; null clears it (falls back to the account ' +
-        'avatar), omit to leave it unchanged',
     ),
 });
 export const updateSeatResponseSchema = gameSnapshotSchema;
@@ -321,10 +395,6 @@ export const startRoundResponseSchema = gameSnapshotSchema;
 /** Submit Action Schemas */
 
 export const submitActionDataSchema = z.object({
-  externalId: z
-    .string()
-    .min(1)
-    .describe('The external identity of the acting participant'),
   targetParticipantId: z
     .uuid()
     .optional()
@@ -350,10 +420,10 @@ export const submitActionResponseSchema = z.object({
 /** Resolve Round Schemas */
 
 export const resolveRoundDataSchema = z.object({
-  winnerExternalIds: z
-    .array(z.string().min(1))
+  winnerParticipantIds: z
+    .array(z.uuid())
     .optional()
-    .describe('The winners; omit to award every remaining contender'),
+    .describe('The winning seats; omit to award every remaining contender'),
 });
 export const resolveRoundResponseSchema = z.object({
   snapshot: gameSnapshotSchema,
