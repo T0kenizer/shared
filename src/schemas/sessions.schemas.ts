@@ -16,10 +16,12 @@ export const sessionSchema = z.object({
 export const createSessionDataSchema = z.object({
   login: z.string().nonempty().describe('The username or email of the user'),
   password: z.string().nonempty().describe('The password of the user'),
-  rememberMe: z
+  stayConnected: z
     .boolean()
     .optional()
-    .describe('Whether to keep the user signed in for a longer period'),
+    .describe(
+      'Whether the session should roll forward with activity instead of expiring at a fixed deadline',
+    ),
 });
 export const createSessionResponseSchema = sessionSchema;
 

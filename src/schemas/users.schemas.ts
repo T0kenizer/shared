@@ -45,7 +45,8 @@ export const userInputSchema = z.object({
     .min(Constants.USERNAME_MIN_LENGTH)
     .max(Constants.USERNAME_MAX_LENGTH)
     .regex(Constants.USERNAME_REGEX, {
-      message: 'Username must only contain letters, numbers and underscores',
+      message:
+        'Username must only contain letters, numbers, dots, underscores and hyphens',
     })
     .describe('The username of the user'),
   displayName: z
@@ -77,7 +78,6 @@ export const createUserResponseSchema = serializedUserSchema;
 
 export const partialUpdateUserDataSchema = userInputSchema
   .pick({
-    username: true,
     displayName: true,
     email: true,
     password: true,
