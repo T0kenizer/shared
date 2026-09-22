@@ -254,6 +254,14 @@ export const gameSnapshotSchema = z.object({
   currentRound: roundSnapshotSchema
     .nullable()
     .describe('The round in progress, if any'),
+  chipModel: z
+    .enum(ChipModel)
+    .describe(
+      'How the balances in this snapshot are meant to be read: an abstract ' +
+        'running total, or chips with distinct denominations. Carried on the ' +
+        'snapshot because it changes how every stack at the table is drawn, ' +
+        "and the rest of the config is none of a player's business",
+    ),
   canAddSeat: z
     .boolean()
     .describe(
