@@ -76,6 +76,7 @@ export enum RoundStatus {
 export type ActionDef = z.infer<typeof Schemas.actionDefSchema>;
 export type ForcedBet = z.infer<typeof Schemas.forcedBetSchema>;
 export type EconomyPolicy = z.infer<typeof Schemas.economyPolicySchema>;
+export type SeatDeclaration = z.infer<typeof Schemas.seatDeclarationSchema>;
 export type SeatingPolicy = z.infer<typeof Schemas.seatingPolicySchema>;
 export type TurnPolicy = z.infer<typeof Schemas.turnPolicySchema>;
 export type EndCondition = z.infer<typeof Schemas.endConditionSchema>;

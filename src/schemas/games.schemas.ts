@@ -258,17 +258,41 @@ export const roundResolutionSchema = z.object({
 
 /** Create Game Session Schemas */
 
-export const createGameSessionDataSchema = z.object({
-  name: z
-    .string()
-    .min(1)
-    .max(60)
-    .optional()
-    .describe('The display name of the game; omit for a generated one'),
-  config: gameConfigSchema
-    .optional()
-    .describe('The game config; omit it to use the server default preset'),
-});
+export const createGameSessionDataSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1)
+      .max(60)
+      .optional()
+      .describe('The display name of the game; omit for a generated one'),
+    templateId: z
+      .string()
+      .min(1)
+      .optional()
+      .describe('A template to open on; mutually exclusive with config'),
+    config: gameConfigSchema
+      .optional()
+      .describe(
+        'A custom game config; mutually exclusive with templateId and seats ' +
+          '(it already carries its own seating). Omit config and templateId ' +
+          'both to use the server default preset.',
+      ),
+    seats: z
+      .array(seatDeclarationSchema)
+      .min(2)
+      .optional()
+      .describe(
+        "Seats to open with instead of the template's or default preset's " +
+          'own; mutually exclusive with config',
+      ),
+  })
+  .refine((data) => !(data.templateId && data.config), {
+    message: 'Provide either templateId or config, not both',
+  })
+  .refine((data) => !(data.config && data.seats), {
+    message: 'seats is not allowed together with config',
+  });
 /**
  * Creating a game seats the owner in the HOST seat, so it answers exactly as a
  * join does — snapshot, token, and the seat the caller now holds.
