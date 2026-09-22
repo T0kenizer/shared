@@ -17,7 +17,6 @@ export type SerializedFile = z.infer<typeof Schemas.serializedFileSchema>;
 
 /** Create File Types */
 
-// z.input keeps `mode` optional on the client; the schema defaults it.
 export type CreateFileQuery = z.input<typeof Schemas.createFileQuerySchema>;
 export type CreateFileResponse = z.infer<
   typeof Schemas.createFileResponseSchema
