@@ -24,3 +24,6 @@ export const GAME_SERVER_EVENTS = {
   PARTICIPANT_LEFT: 'game:participant_left',
   ERROR: 'game:error',
 } as const;
+
+/** Header carrying the signed player token on in-game REST calls. */
+export const PLAYER_TOKEN_HEADER = 'x-player-token';
