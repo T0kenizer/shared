@@ -151,21 +151,34 @@ export const listGameTemplatesResponseSchema = z.array(gameTemplateSchema);
 
 /** Game Snapshot Schemas */
 
+/**
+ * One chair, fully described. Everything a client needs to draw it is answered
+ * here — the name, the avatar, and whether anybody is in it — because only the
+ * server can resolve any of the three: the name walks an
+ * override/account/config chain, the avatar belongs to an account the client
+ * cannot read, and a free seat is free in the eyes of the runtime, not of the
+ * renderer. A client that invents its own answers ends up disagreeing with the
+ * table it is drawing.
+ */
 export const participantSnapshotSchema = z.object({
   id: z.uuid().describe('The identifier of the participant (seat)'),
   role: z.enum(ParticipantRole).describe('The role of the seat'),
   displayName: z
     .string()
     .describe(
-      'The name shown for the seat: an explicit override, else the ' +
-        "claiming account's name, else the config default",
+      'The name to show for the seat, claimed or not: an explicit override, ' +
+        "else the claiming account's name, else the seat's declared name " +
+        '("Seat 3"). Always a usable label — clients render it as-is rather ' +
+        'than substituting a placeholder of their own for a free seat.',
     ),
   photoUrl: z
-    .string()
+    .url()
     .nullable()
     .describe(
-      "URL of the claiming account's avatar; null for an anonymous or " +
-        'unclaimed seat',
+      "Absolute URL of the claiming account's avatar. Null whenever there is " +
+        'no account to take one from — a free seat, or one held ' +
+        'anonymously — in which case the client falls back to the same avatar ' +
+        'placeholder it uses everywhere else.',
     ),
   balance: z.number().int().describe('The current balance of the participant'),
   seatIndex: z
@@ -184,9 +197,10 @@ export const participantSnapshotSchema = z.object({
   claimed: z
     .boolean()
     .describe(
-      'Whether a player currently holds the seat. The identity itself is ' +
-        'never broadcast: a client recognises its own seat through the ' +
-        'participantId carried by its player token.',
+      'Whether a player currently holds the seat; false means the seat is ' +
+        'free, and the host plays it until somebody takes it. The identity ' +
+        'itself is never broadcast: a client recognises its own seat through ' +
+        'the participantId carried by its player token.',
     ),
 });
 
