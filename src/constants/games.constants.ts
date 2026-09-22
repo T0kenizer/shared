@@ -5,6 +5,7 @@
 export const GAME_CLIENT_MESSAGES = {
   ATTACH: 'game:attach',
   UPDATE_SEAT: 'game:update_seat',
+  ADD_SEAT: 'game:add_seat',
   START_ROUND: 'game:start_round',
   ACTION: 'game:action',
   RESOLVE: 'game:resolve',

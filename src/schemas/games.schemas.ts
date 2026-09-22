@@ -93,6 +93,14 @@ export const seatingPolicySchema = z.object({
       'Whether free seats can still be claimed once the game has started; ' +
         'reconnections of seated players are always allowed',
     ),
+  allowExtraSeats: z
+    .boolean()
+    .default(false)
+    .describe(
+      'Whether the host may open further seats once every declared seat is ' +
+        "claimed. Still capped by the owner's plan, and only between rounds: " +
+        'a seat added mid-round would join a rotation already under way',
+    ),
 });
 
 export const turnPolicySchema = z.object({
@@ -246,6 +254,15 @@ export const gameSnapshotSchema = z.object({
   currentRound: roundSnapshotSchema
     .nullable()
     .describe('The round in progress, if any'),
+  canAddSeat: z
+    .boolean()
+    .describe(
+      'Whether another seat may be opened right now. Answered server-side ' +
+        'because it depends on three things a client cannot see: the ' +
+        "session's seating config, the owner's plan cap, and whether every " +
+        'existing seat is claimed. Host-only in effect — the server refuses ' +
+        'the call from anyone else regardless of this flag.',
+    ),
 });
 
 export const roundResolutionSchema = z.object({
@@ -444,6 +461,30 @@ export const updateSeatDataSchema = z.object({
     ),
 });
 export const updateSeatResponseSchema = gameSnapshotSchema;
+
+/** Add Seat Schemas */
+
+export const addSeatDataSchema = z.object({
+  displayName: z
+    .string()
+    .min(1)
+    .max(60)
+    .optional()
+    .describe(
+      'What the new chair is called until somebody claims it; omit for the ' +
+        'positional default ("Seat 7")',
+    ),
+  initialBalance: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional()
+    .describe(
+      "Starting stack for the new chair; omit to use the session's default. " +
+        'Note this adds chips to the table that were not in play before',
+    ),
+});
+export const addSeatResponseSchema = gameSnapshotSchema;
 
 /** Start Round Schemas */
 
