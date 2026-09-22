@@ -11,6 +11,7 @@ import {
   RoundStatus,
   TurnRegime,
 } from '@/types/games.types';
+import { JOIN_CODE_REGEX } from '@constants/games.constants';
 import { z } from 'zod';
 
 /** Game Config Schemas */
@@ -218,14 +219,12 @@ export const roundSnapshotSchema = z.object({
  */
 export const joinCodeSchema = z
   .string()
-  .regex(/^\d{6}$/, 'The join code is 6 digits');
+  .regex(JOIN_CODE_REGEX, 'The join code is 6 digits');
 
 export const gameSnapshotSchema = z.object({
   id: z.uuid().describe('The unique identifier of the game session'),
   name: z.string().describe('The display name of the game session'),
-  joinCode: z
-    .string()
-    .regex(/^\d{6}$/)
+  joinCode: joinCodeSchema
     .nullable()
     .describe(
       'The 6-digit code currently resolving to this room; null once it has ' +
