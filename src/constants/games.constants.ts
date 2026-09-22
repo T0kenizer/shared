@@ -27,5 +27,4 @@ export const GAME_SERVER_EVENTS = {
 
 export const JOIN_CODE_REGEX = /^\d{6}$/;
 
-/** Header carrying the signed player token on in-game REST calls. */
-export const PLAYER_TOKEN_HEADER = 'x-player-token';
+export const PLAYER_TOKEN_HEADER = 'X-Player-Token';
