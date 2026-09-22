@@ -1,6 +1,6 @@
 import { UserRole } from '@/types/users.types';
 import * as Constants from '@constants/users.constants';
-import { buildFileUrl, fileEntitySchema } from '@schemas/files.schemas';
+import { fileEntitySchema } from '@schemas/files.schemas';
 import { loadableRelation } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
@@ -25,16 +25,12 @@ export const userEntitySchema = z.object({
 });
 
 export const serializedUserSchema = userEntitySchema
-  .omit({ password: true, googleId: true })
-  .transform(({ avatar, ...user }) => {
-    const avatarUuid = typeof avatar === 'string' ? avatar : avatar?.uuid;
-
-    return {
-      ...user,
-      displayName: user.displayName ?? user.username,
-      avatarUrl: avatarUuid ? buildFileUrl(avatarUuid) : null,
-    };
-  });
+  .omit({ avatar: true, password: true, googleId: true })
+  .extend({ avatarUrl: z.url().nullable() })
+  .transform((user) => ({
+    ...user,
+    displayName: user.displayName ?? user.username,
+  }));
 
 /** User Input Schemas */
 

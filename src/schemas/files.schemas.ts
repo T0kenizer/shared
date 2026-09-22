@@ -24,20 +24,17 @@ export const fileEntitySchema = z.object({
   deletedAt: z.date().nullish().describe('The date when the file was deleted'),
 });
 
-export const buildFileUrl = (uuid: string): string => `/files/${uuid}/content`;
-
 /** Serialization Schemas */
 
-// Bucket internals stay server-side; clients reach the content through `url`.
 export const serializedFileSchema = fileEntitySchema
   .omit({ bucketKey: true, bucketName: true, deletedAt: true })
+  .extend({
+    url: z.url().describe('A signed, time-limited URL to the file content'),
+  })
   .transform(({ createdBy, ...file }) => ({
     ...file,
-    // A freshly created file carries the loaded uploader entity, whereas a
-    // fetched one only carries its uuid; clients always get the uuid.
     createdBy:
       (typeof createdBy === 'string' ? createdBy : createdBy?.uuid) ?? null,
-    url: buildFileUrl(file.uuid),
   }));
 
 /** Create File Schemas */
