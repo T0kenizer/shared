@@ -132,6 +132,15 @@ export const gameConfigSchema = z.object({
   endPolicy: endPolicySchema,
 });
 
+export const gameTemplateSchema = z.object({
+  id: z.string().min(1).describe('Stable identifier of the template'),
+  name: z.string().min(1).describe('Display name of the template'),
+  description: z.string().min(1).describe('What this template sets up'),
+  config: gameConfigSchema.describe('The config this template opens with'),
+});
+
+export const listGameTemplatesResponseSchema = z.array(gameTemplateSchema);
+
 /** Game Snapshot Schemas */
 
 export const participantSnapshotSchema = z.object({

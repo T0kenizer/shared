@@ -81,6 +81,10 @@ export type TurnPolicy = z.infer<typeof Schemas.turnPolicySchema>;
 export type EndCondition = z.infer<typeof Schemas.endConditionSchema>;
 export type EndPolicy = z.infer<typeof Schemas.endPolicySchema>;
 export type GameConfig = z.infer<typeof Schemas.gameConfigSchema>;
+export type GameTemplate = z.infer<typeof Schemas.gameTemplateSchema>;
+export type ListGameTemplatesResponse = z.infer<
+  typeof Schemas.listGameTemplatesResponseSchema
+>;
 
 /** Game Snapshot Types */
 
