@@ -1,4 +1,4 @@
-import { UserRole } from '@/types/users.types';
+import { PasswordRule, UserRole } from '@/types/users.types';
 
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 64;
@@ -10,13 +10,6 @@ export const EMAIL_MAX_LENGTH = 320;
 
 export const PASSWORD_MIN_LENGTH = 12;
 export const PASSWORD_MAX_LENGTH = 72;
-
-export interface PasswordRule {
-  id: string;
-  label: string;
-  message: string;
-  test: (password: string) => boolean;
-}
 
 export const PASSWORD_RULES: PasswordRule[] = [
   {

@@ -7,6 +7,13 @@ export enum UserRole {
   Owner = 'OWNER',
 }
 
+export interface PasswordRule {
+  id: string;
+  label: string;
+  message: string;
+  test: (password: string) => boolean;
+}
+
 export type SerializedUser = z.infer<typeof Schemas.serializedUserSchema>;
 
 /** Create User Types */
