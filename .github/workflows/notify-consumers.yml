@@ -1,0 +1,29 @@
+name: Notify consumers
+
+on:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.TOKENIZER_APP_ID }}
+          private-key: ${{ secrets.TOKENIZER_APP_PRIVATE_KEY }}
+          owner: T0kenizer
+          repositories: backend,frontend
+
+      - env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          for repo in backend frontend; do
+            gh api "repos/T0kenizer/$repo/dispatches" \
+              -f event_type=shared-updated \
+              -f "client_payload[branch]=${{ github.ref_name }}"
+          done
