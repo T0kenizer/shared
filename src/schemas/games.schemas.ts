@@ -603,8 +603,11 @@ export const createGameSessionDataSchema = z
       .string()
       .min(1)
       .max(60)
-      .optional()
-      .describe('The display name of the game; omit for a generated one'),
+      .describe(
+        'The display name of the game. Required: a table always has a name, ' +
+          "and the one to fall back on is the creating client's to pick — the " +
+          'API does not invent one behind its back',
+      ),
     mode: z
       .enum(GameMode)
       .describe('The game to play. Every table starts from a mode'),
