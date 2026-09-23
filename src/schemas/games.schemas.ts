@@ -23,11 +23,6 @@ import { z } from 'zod';
 
 /** Poker Rule Schemas */
 
-/**
- * The stakes. Two numbers, and they are the only forced bets poker has: the
- * seats that owe them follow from the dealer button, so there is nothing to
- * configure about _who_ pays — only how much.
- */
 export const blindsSchema = z
   .object({
     small: z
@@ -46,12 +41,6 @@ export const blindsSchema = z
     path: ['big'],
   });
 
-/**
- * Everything a poker table is set up with. Deliberately short: the rest of
- * poker is not a setting. Which actions are legal, who acts first, when a
- * betting round closes and how the pot is split all follow from these four
- * values and the state of play, and the server derives them hand by hand.
- */
 export const pokerRulesSchema = z.object({
   blinds: blindsSchema,
   ante: z
@@ -67,10 +56,6 @@ export const pokerRulesSchema = z.object({
 
 /** Seating Schemas */
 
-/**
- * A single declared seat: its default (pre-claim) name and starting stack. The
- * host acts on behalf of a seat until a player claims it.
- */
 export const seatDeclarationSchema = z.object({
   displayName: z
     .string()
@@ -85,11 +70,6 @@ export const seatDeclarationSchema = z.object({
     .describe('Starting stack for this seat; omit to use the table default'),
 });
 
-/**
- * Seats are declared up front: creating a session creates one participant per
- * entry in `seats` (seat 0 is the host's), which players then claim to take
- * part — the host acts on behalf of any seat nobody has claimed yet.
- */
 export const seatingPolicySchema = z.object({
   seats: z
     .array(seatDeclarationSchema)
@@ -120,15 +100,6 @@ export const seatingPolicySchema = z.object({
 
 /** Free Mode Rule Schemas */
 
-/**
- * One move a host has put on the table.
- *
- * The free runtime has no opinion about what a move means — it moves chips,
- * logs it and passes the turn on — so everything that makes a move behave the
- * way it does is declared here rather than derived from the state of play. That
- * is the whole of the trade: any game can be described, and none of them is
- * checked.
- */
 export const actionDefSchema = z.object({
   id: z.string().min(1).describe('The identifier of the action definition'),
   label: z.string().min(1).describe('The display label of the action'),
@@ -144,11 +115,6 @@ export const actionDefSchema = z.object({
     .describe('Whether submitting this action folds the participant'),
 });
 
-/**
- * A bet taken before anybody acts. Unlike poker's blinds, the seat that owes it
- * is named outright (`seatOffset`), because the free table has no button to
- * measure the position from.
- */
 export const forcedBetSchema = z.object({
   label: z.string().min(1).describe('The display label of the forced bet'),
   amount: z.number().int().positive().describe('The amount of the forced bet'),
@@ -197,23 +163,12 @@ export const endPolicySchema = z.object({
 
 /** Game Config Schemas */
 
-/**
- * A poker table, whole. `mode` is the discriminator: it is what says which
- * rules the runtime is about to apply, and it travels with the config
- * everywhere the config goes — into the database column, out of the API, back
- * into the runtime on a re-open.
- */
 export const pokerGameConfigSchema = z.object({
   mode: z.literal(GameMode.Poker),
   seating: seatingPolicySchema,
   rules: pokerRulesSchema,
 });
 
-/**
- * A free table, whole: the moves, the money and the rotation, all declared by
- * the host. Long where poker's config is short, and for the same reason — the
- * server derives nothing here, so everything has to be said.
- */
 export const freeGameConfigSchema = z.object({
   mode: z.literal(GameMode.Free),
   seating: seatingPolicySchema,
@@ -226,20 +181,11 @@ export const freeGameConfigSchema = z.object({
   endPolicy: endPolicySchema,
 });
 
-/**
- * The config of a session, one member per game mode.
- *
- * A union rather than a bag of independent switches, because the parameters of
- * one mode mean nothing to another: there is no coherent table with a poker
- * blind and some other mode's turn timer, and a shape that can express one is a
- * shape somebody eventually creates.
- */
 export const gameConfigSchema = z.discriminatedUnion('mode', [
   pokerGameConfigSchema,
   freeGameConfigSchema,
 ]);
 
-/** What a mode is called, and the table it opens with. */
 export const gameModeDescriptorSchema = z.object({
   mode: z.enum(GameMode).describe('The mode this descriptor stands for'),
   name: z.string().min(1).describe('Display name of the mode'),
@@ -258,26 +204,12 @@ export const listGameModesResponseSchema = z.array(gameModeDescriptorSchema);
 
 /** Game Snapshot Schemas */
 
-/**
- * What the table is playing for. Never a secret — the stakes are announced
- * before anybody sits down — so they ride on the snapshot, unlike the rest of
- * the config, which is the host's business alone.
- */
 export const tableStakesSchema = z.object({
   blinds: blindsSchema,
   ante: z.number().int().nonnegative(),
   bettingStructure: z.enum(BettingStructure),
 });
 
-/**
- * One chair, fully described. Everything a client needs to draw it is answered
- * here — the name, the avatar, and whether anybody is in it — because only the
- * server can resolve any of the three: the name walks an
- * override/account/config chain, the avatar belongs to an account the client
- * cannot read, and a free seat is free in the eyes of the runtime, not of the
- * renderer. A client that invents its own answers ends up disagreeing with the
- * table it is drawing.
- */
 export const participantSnapshotSchema = z.object({
   id: z.uuid().describe('The identifier of the participant (seat)'),
   role: z.enum(ParticipantRole).describe('The role of the seat'),
@@ -332,22 +264,11 @@ export const potSnapshotSchema = z.object({
         'exists precisely because somebody could not match the betting, so ' +
         'this is shorter than the contender list, never equal to it by chance.',
     ),
-  /** A main pot is the one everybody in the hand paid into. */
   isSidePot: z
     .boolean()
     .describe('Whether this pot was split off by an all-in'),
 });
 
-/**
- * One move the active seat may make right now, as the server has worked it out.
- *
- * `min`/`max` are **totals for the current street**, not increments: "raise to
- * 120", not "raise by 80". Poker is bet at totals, the runtime settles at
- * totals, and the two conventions meeting in the middle of a client is how a
- * player ends up putting in twice what they meant to. A move that takes no
- * amount carries neither; a move whose amount is fixed — a call, an all-in —
- * carries them equal.
- */
 export const legalActionSchema = z.object({
   action: z.enum(PokerAction).describe('The move'),
   label: z.string().min(1).describe('What to call it on a button'),
@@ -365,7 +286,6 @@ export const legalActionSchema = z.object({
     .describe('Largest total this seat may commit on this street'),
 });
 
-/** The open betting round: what is owed, by whom, and what they may do. */
 export const bettingSnapshotSchema = z.object({
   activeParticipant: z
     .uuid()
@@ -405,14 +325,6 @@ export const handEventSchema = z.object({
   timestamp: z.iso.datetime().describe('When it happened'),
 });
 
-/**
- * One deal, from the blinds to the payout.
- *
- * A hand is not a betting round: it holds four of them (`street`), and the
- * betting state below is the one currently open. Keeping the two apart is what
- * lets "the betting is finished" and "the hand is finished" be different
- * answers, which in poker they nearly always are.
- */
 export const handSnapshotSchema = z.object({
   id: z.uuid().describe('The runtime identifier of the hand'),
   handNumber: z
@@ -446,14 +358,6 @@ export const actionSnapshotSchema = z.object({
   timestamp: z.iso.datetime().describe('When it happened'),
 });
 
-/**
- * One round of a free table: a single pot, one open turn, and the log of
- * everything played into it.
- *
- * Flatter than a poker hand on purpose. A free round has no streets, so "the
- * betting is finished" and "the round is finished" are the same answer — which
- * is exactly why a round ends when the table says it does.
- */
 export const roundSnapshotSchema = z.object({
   id: z.uuid().describe('The runtime identifier of the round'),
   status: z.enum(RoundStatus).describe('The status of the round'),
@@ -477,16 +381,10 @@ export const roundSnapshotSchema = z.object({
     .describe('The actions applied during the round'),
 });
 
-/**
- * The 6-digit room code, readable aloud over a call. It is a lookup key only:
- * it never reaches the database, lives in Redis under a sliding TTL, and
- * resolves to the session uuid that everything else is keyed by.
- */
 export const joinCodeSchema = z
   .string()
   .regex(JOIN_CODE_REGEX, 'The join code is 6 digits');
 
-/** Everything a snapshot answers whatever game is being played. */
 const gameSnapshotBaseSchema = z.object({
   id: z.uuid().describe('The unique identifier of the game session'),
   name: z.string().describe('The display name of the game session'),
@@ -547,15 +445,6 @@ export const freeGameSnapshotSchema = gameSnapshotBaseSchema.extend({
     .describe('The round in progress, if any'),
 });
 
-/**
- * What the table looks like right now, one member per game mode.
- *
- * A union for the same reason the config is one: a poker hand and a free round
- * are not the same object under two names, and a snapshot that carried both
- * fields as optionals would ask every client to guess which half is real. The
- * `mode` discriminator answers it outright — a client reads it to know which
- * table to draw and which vocabulary to speak.
- */
 export const gameSnapshotSchema = z.discriminatedUnion('mode', [
   pokerGameSnapshotSchema,
   freeGameSnapshotSchema,
@@ -585,11 +474,6 @@ export const roundResolutionSchema = z.object({
   winners: z.array(z.uuid()).describe('The participants awarded the pot'),
 });
 
-/**
- * How a deal ended, whichever game it was. Discriminated on `mode` like
- * everything else that differs between the two: a client holding a resolution
- * knows which one it has without inspecting which fields happen to be there.
- */
 export const gameResolutionSchema = z.discriminatedUnion('mode', [
   handResolutionSchema,
   roundResolutionSchema,
@@ -635,10 +519,6 @@ export const createGameSessionDataSchema = z
     path: ['config'],
   });
 
-/**
- * Creating a game seats the owner in the HOST seat, so it answers exactly as a
- * join does — snapshot, token, and the seat the caller now holds.
- */
 export const createGameSessionResponseSchema = z.object({
   snapshot: gameSnapshotSchema,
   token: z.string().min(1),
@@ -652,11 +532,6 @@ export const attachSocketDataSchema = z.object({
   token: z.string().min(1).describe('The player token issued by the REST join'),
 });
 
-/**
- * The ack of an attach. It repeats the seat the token names, so a client that
- * came back from a refresh knows which chair is its own without having to
- * unpack the token itself.
- */
 export const attachSocketResponseSchema = z.object({
   snapshot: gameSnapshotSchema,
   participantId: z.uuid(),
@@ -668,22 +543,12 @@ export const joinByCodeDataSchema = z.object({
   code: joinCodeSchema.describe('The 6-digit code dictated by the host'),
 });
 
-/**
- * Nothing but the uuid: resolving a code hands the client the permanent
- * identifier, and every subsequent call (REST or socket) is keyed by it.
- */
 export const joinByCodeResponseSchema = z.object({
   gameUuid: z.uuid().describe('The session the code resolves to'),
 });
 
 /** Public Room View Schemas */
 
-/**
- * What a stranger holding a code may see before committing to the room: enough
- * to confirm they are about to join the right game, and nothing that belongs to
- * a player. Deliberately excludes the session uuid — resolving a code to a uuid
- * is `POST /games/join-by-code`, which is rate-limited.
- */
 export const publicRoomViewSchema = z.object({
   name: z.string().describe('The display name of the game'),
   mode: z.enum(GameMode).describe('The game being played'),
@@ -697,30 +562,7 @@ export const publicRoomViewSchema = z.object({
 });
 export const retrieveRoomByCodeResponseSchema = publicRoomViewSchema;
 
-/**
- * The same public view, reached by uuid instead of a code — the shape a client
- * that already holds the uuid (a join link, a scanned QR) needs to confirm the
- * room before committing to it. Unlike `GET /games/:uuid` it neither opens the
- * room nor exposes seats, so it is safe to call from an unauthenticated
- * screen.
- */
 export const retrieveRoomResponseSchema = publicRoomViewSchema;
-
-/**
- * The join link a QR code carries. It holds the session uuid, so scanning it
- * lands on the join screen with the code step already behind it — the code and
- * the QR are two ways to reach the same uuid, never two different rooms.
- */
-export const buildGameJoinPath = (gameUuid: string): string =>
-  `/game/join/${gameUuid}`;
-
-/**
- * Content route of a room's join QR. Served like a file's content — an image
- * behind a uuid, cacheable forever — so clients point an `<img>` straight at it
- * rather than carrying bytes through JSON.
- */
-export const buildGameQrUrl = (gameUuid: string): string =>
-  `/games/${gameUuid}/qrcode`;
 
 /** Retrieve Game Session Schemas */
 
@@ -776,10 +618,6 @@ export const claimSeatDataSchema = z
     path: ['seatIndex'],
   });
 
-/**
- * A join hands back the token the client must keep: it is the only proof that
- * it owns its seat, and the only way back into it after a reconnection.
- */
 export const claimSeatResponseSchema = z.object({
   snapshot: gameSnapshotSchema,
   token: playerTokenSchema,
@@ -814,25 +652,11 @@ export const startRoundResponseSchema = gameSnapshotSchema;
 
 /** Submit Action Schemas */
 
-/**
- * Host only: the unclaimed seat to act on behalf of. Omit to act on the
- * caller's own seat; rejected if the seat is already claimed.
- */
 const targetParticipantSchema = z
   .uuid()
   .optional()
   .describe('Host only: the unclaimed seat to act on behalf of');
 
-/**
- * A move, in the vocabulary of whichever game is being played.
- *
- * The two modes name a move differently — poker has a fixed set of them, a free
- * table has whatever ids its host wrote into its catalog — so exactly one of
- * `action` and `definitionId` is given, and naming both is refused here rather
- * than silently resolved by the server. Which one a given table accepts is the
- * session's to say: it knows its own mode, and a payload in the other one's
- * vocabulary is a client calling the wrong game.
- */
 export const submitActionDataSchema = z
   .object({
     targetParticipantId: targetParticipantSchema,
@@ -884,17 +708,6 @@ export const potAwardSchema = z.object({
     .describe('The seats that take it; several for a split'),
 });
 
-/**
- * The showdown, as a companion app can know it: the cards are on the physical
- * table and the app never sees them, so the winner is declared rather than
- * computed. Only reachable once the betting is finished — before that, the
- * chips are still moving.
- *
- * Declared pot by pot, because a side pot is a different contest with a
- * different field: the short stack who won the main pot never paid into the one
- * above it, and a flat list of winners has no way to say who did. Nearly every
- * hand has exactly one pot and therefore exactly one entry here.
- */
 export const declareWinnersDataSchema = z.object({
   awards: z
     .array(potAwardSchema)
@@ -908,14 +721,6 @@ export const declareWinnersResponseSchema = z.object({
 
 /** Resolve Round Schemas */
 
-/**
- * The free table's own verdict on a round.
- *
- * One flat list of winners, because a free round has one pot: side pots are the
- * thing that makes poker need an award per pot, and `PotMode.Single` is the
- * only pooling the free runtime settles. Omit the winners entirely to close a
- * round that nobody won — the pot is emptied and nothing is paid out.
- */
 export const resolveRoundDataSchema = z.object({
   winnerParticipantIds: z
     .array(z.uuid())

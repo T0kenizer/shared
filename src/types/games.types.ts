@@ -1,44 +1,17 @@
 import * as Schemas from '@schemas/games.schemas';
 import { z } from 'zod';
 
-/**
- * The game a table plays. Everything else about a session hangs off this one
- * choice: the mode decides which rules apply, which parameters the host is even
- * asked for, and how a deal is played out. A further mode adds an entry here
- * and a config member to `gameConfigSchema`, and nothing in between has to be
- * re-litigated.
- */
 export enum GameMode {
   Poker = 'POKER',
-  /**
-   * The open table: the host describes the game — the moves, the opening bets,
-   * how the turn travels — and the runtime only keeps the chips honest. It
-   * predates poker and is kept as an experiment, because a table that can
-   * express any game can also express one that does not work.
-   */
   Free = 'FREE',
 }
 
-/** Poker Rule Enums */
-
-/**
- * What caps a bet or a raise. The one parameter that changes how a poker table
- * actually plays, which is why it is asked rather than assumed.
- */
 export enum BettingStructure {
-  /** Any amount up to the whole stack. */
   NoLimit = 'NO_LIMIT',
-  /** Up to the size of the pot after the call. */
   PotLimit = 'POT_LIMIT',
-  /** One fixed increment: the big blind pre-flop and on the flop, double after. */
   FixedLimit = 'FIXED_LIMIT',
 }
 
-/**
- * How stacks are drawn. A display choice, not a rule — the arithmetic is the
- * same either way — but it is the one table parameter a player sees on every
- * single seat, so the host picks it.
- */
 export enum ChipModel {
   AbstractBalance = 'ABSTRACT_BALANCE',
   Denominated = 'DENOMINATED',
@@ -46,11 +19,6 @@ export enum ChipModel {
 
 /** Poker Runtime Enums */
 
-/**
- * The four betting rounds of a hand. Tokenizer deals no cards — the deck is on
- * the physical table — so a street here is exactly what it is worth to the
- * chips: one full round of betting, and the point at which the next one opens.
- */
 export enum Street {
   Preflop = 'PREFLOP',
   Flop = 'FLOP',
@@ -58,11 +26,6 @@ export enum Street {
   River = 'RIVER',
 }
 
-/**
- * What a player may do on their turn. Never a host setting: which of these is
- * legal right now follows from the bet standing in front of them, and the
- * server is the only thing that knows it.
- */
 export enum PokerAction {
   Fold = 'FOLD',
   Check = 'CHECK',
@@ -72,7 +35,6 @@ export enum PokerAction {
   AllIn = 'ALL_IN',
 }
 
-/** Everything the hand log records, players' moves and forced posts alike. */
 export enum HandEventType {
   Ante = 'ANTE',
   SmallBlind = 'SMALL_BLIND',
@@ -83,55 +45,33 @@ export enum HandEventType {
   Bet = 'BET',
   Raise = 'RAISE',
   AllIn = 'ALL_IN',
-  /** A betting round closed and the next street opened. */
   StreetDealt = 'STREET_DEALT',
 }
 
 export enum HandStatus {
-  /** A betting round is open; somebody owes an action. */
   Betting = 'BETTING',
-  /**
-   * The river was settled with more than one contender left. The chips are
-   * decided, the cards are not — and the app cannot see them, so the table
-   * declares who takes the pot.
-   */
   Showdown = 'SHOWDOWN',
-  /** Paid out. */
   Settled = 'SETTLED',
 }
 
 export enum HandEndReason {
-  /** Everyone folded to one contender; the pot is uncontested. */
   Uncontested = 'UNCONTESTED',
-  /** Declared at showdown by the table. */
   Showdown = 'SHOWDOWN',
 }
 
 /** Free Mode Rule Enums */
 
-/**
- * How the chips in play are pooled. A single pot is the only thing the free
- * runtime settles today; side pots are declared here because a table that
- * allows all-ins eventually needs them, and a host has to be able to see that
- * they are not on offer yet.
- */
 export enum PotMode {
   Single = 'SINGLE',
   MultipleSidepots = 'MULTIPLE_SIDEPOTS',
 }
 
-/** Where the pot goes when a round settles. */
 export enum PayoutMode {
   WinnerTakesAll = 'WINNER_TAKES_ALL',
   Split = 'SPLIT',
   PeerToPeer = 'PEER_TO_PEER',
 }
 
-/**
- * What kind of number a move carries, if any. This is the whole of what the
- * free runtime knows about an amount: it has no notion of a bet to match, so
- * the shape is the host's to declare rather than the table's to derive.
- */
 export enum AmountForm {
   None = 'NONE',
   Free = 'FREE',
@@ -139,10 +79,8 @@ export enum AmountForm {
   Raise = 'RAISE',
 }
 
-/** How the turn travels round the table. */
 export enum TurnRegime {
   Sequential = 'SEQUENTIAL',
-  /** A move can open a window in which anybody may cut in and take the turn. */
   SequentialInterruptible = 'SEQUENTIAL_INTERRUPTIBLE',
   Simultaneous = 'SIMULTANEOUS',
 }
@@ -152,7 +90,6 @@ export enum Direction {
   CounterClockwise = 'COUNTER_CLOCKWISE',
 }
 
-/** Who decides a round is over: the table, or the rules it declared. */
 export enum EndResolution {
   ManualHost = 'MANUAL_HOST',
   Automatic = 'AUTOMATIC',
@@ -172,7 +109,6 @@ export enum GameSessionStatus {
   Lobby = 'LOBBY',
   Running = 'RUNNING',
   Finished = 'FINISHED',
-  /** Closed by the lifecycle queue because the room emptied out. */
   Abandoned = 'ABANDONED',
 }
 
@@ -184,15 +120,37 @@ export enum ParticipantRole {
 export enum ParticipantStatus {
   Active = 'ACTIVE',
   Folded = 'FOLDED',
-  /**
-   * In the hand with nothing left to bet. Still a contender for every pot they
-   * paid into, but the betting round skips them: there is nothing left to ask.
-   */
   AllIn = 'ALL_IN',
-  /** Out of chips, out of the game. */
   Eliminated = 'ELIMINATED',
-  /** The seat exists but nobody has claimed it yet. */
   Waiting = 'WAITING',
+}
+
+/** Game Protocol Enums */
+
+export enum GameClientMessage {
+  Attach = 'game:attach',
+  UpdateSeat = 'game:update_seat',
+  StartHand = 'game:start_hand',
+  StartRound = 'game:start_round',
+  Action = 'game:action',
+  DeclareWinners = 'game:declare_winners',
+  Resolve = 'game:resolve',
+  Snapshot = 'game:snapshot',
+  Close = 'game:close',
+}
+
+export enum GameServerEvent {
+  ParticipantJoined = 'game:participant_joined',
+  ParticipantUpdated = 'game:participant_updated',
+  HandStarted = 'game:hand_started',
+  RoundStarted = 'game:round_started',
+  ActionApplied = 'game:action_applied',
+  HandSettled = 'game:hand_settled',
+  RoundResolved = 'game:round_resolved',
+  SessionClosed = 'game:session_closed',
+  ParticipantDisconnected = 'game:participant_disconnected',
+  ParticipantLeft = 'game:participant_left',
+  Error = 'game:error',
 }
 
 /** Game Config Types */
