@@ -17,9 +17,7 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: true,
-      // The free mode ships to every plan that can open a table at all: it is
-      // an experiment, not a perk, and gating it would make it look finished.
-      modes: [GameMode.Poker, GameMode.Free],
+      modes: [GameMode.Poker],
       canCustomizeRules: false,
       maxSeats: 4,
     },
@@ -28,6 +26,10 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: true,
+      // The free table is the paid half of the offer, and it lands with
+      // `canCustomizeRules` for a reason: the mode *is* its parameters. A plan
+      // that could open one without writing its rules would get the server's
+      // defaults, which are simplified poker — the mode in name only.
       modes: [GameMode.Poker, GameMode.Free],
       canCustomizeRules: true,
       maxSeats: 12,
