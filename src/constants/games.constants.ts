@@ -5,7 +5,6 @@
 export const GAME_CLIENT_MESSAGES = {
   ATTACH: 'game:attach',
   UPDATE_SEAT: 'game:update_seat',
-  ADD_SEAT: 'game:add_seat',
   /** Poker: deal the next hand. */
   START_HAND: 'game:start_hand',
   /** Free mode: open the next round. */

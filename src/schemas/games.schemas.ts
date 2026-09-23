@@ -520,11 +520,13 @@ const gameSnapshotBaseSchema = z.object({
   canAddSeat: z
     .boolean()
     .describe(
-      'Whether another seat may be opened right now. Answered server-side ' +
-        'because it depends on three things a client cannot see: the ' +
-        "session's seating config, the owner's plan cap, and whether every " +
-        'existing seat is claimed. Host-only in effect — the server refuses ' +
-        'the call from anyone else regardless of this flag.',
+      'Whether a further seat may be opened right now — which is to say ' +
+        'whether somebody turning up at a full table may pull up a chair. ' +
+        'Answered server-side because it depends on four things a client ' +
+        "cannot see: the session's seating config, the owner's plan cap, " +
+        'whether every existing seat is already claimed, and whether a deal ' +
+        'is under way. It is read by whoever is joining, not by the host: a ' +
+        'chair is pulled up by the person about to sit in it.',
     ),
 });
 
@@ -731,29 +733,45 @@ export const playerTokenSchema = z
       'successful join and replayed to reconnect or to authenticate an action.',
   );
 
-export const claimSeatDataSchema = z.object({
-  token: playerTokenSchema
-    .optional()
-    .describe(
-      'A token issued earlier for this session; present it to reclaim the ' +
-        'same seat after a refresh or a dropped connection',
-    ),
-  displayName: z
-    .string()
-    .min(1)
-    .max(60)
-    .optional()
-    .describe(
-      'Explicit display name override; omit to fall back to the account ' +
-        "name (when signed in) or the seat's config default",
-    ),
-  seatIndex: z
-    .number()
-    .int()
-    .nonnegative()
-    .optional()
-    .describe('The seat to claim; omit to take the first free seat'),
-});
+export const claimSeatDataSchema = z
+  .object({
+    token: playerTokenSchema
+      .optional()
+      .describe(
+        'A token issued earlier for this session; present it to reclaim the ' +
+          'same seat after a refresh or a dropped connection',
+      ),
+    displayName: z
+      .string()
+      .min(1)
+      .max(60)
+      .optional()
+      .describe(
+        'Explicit display name override; omit to fall back to the account ' +
+          "name (when signed in) or the seat's config default",
+      ),
+    seatIndex: z
+      .number()
+      .int()
+      .nonnegative()
+      .optional()
+      .describe('The seat to claim; omit to take the first free seat'),
+    openExtraSeat: z
+      .boolean()
+      .optional()
+      .describe(
+        'Pull up a chair rather than take one: opens a further seat at a table ' +
+          'where every existing one is claimed, and sits the caller in it. ' +
+          'Refused unless the snapshot says `canAddSeat` — the seating config ' +
+          "allows it, the owner's plan has room, and no deal is under way — and " +
+          'mutually exclusive with `seatIndex`, which names a chair that ' +
+          'already exists.',
+      ),
+  })
+  .refine((data) => !(data.openExtraSeat && data.seatIndex !== undefined), {
+    message: 'seatIndex is not allowed together with openExtraSeat',
+    path: ['seatIndex'],
+  });
 
 /**
  * A join hands back the token the client must keep: it is the only proof that
@@ -782,30 +800,6 @@ export const updateSeatDataSchema = z.object({
     ),
 });
 export const updateSeatResponseSchema = gameSnapshotSchema;
-
-/** Add Seat Schemas */
-
-export const addSeatDataSchema = z.object({
-  displayName: z
-    .string()
-    .min(1)
-    .max(60)
-    .optional()
-    .describe(
-      'What the new chair is called until somebody claims it; omit for the ' +
-        'positional default ("Seat 7")',
-    ),
-  initialBalance: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .describe(
-      "Starting stack for the new chair; omit to use the table's default. " +
-        'Note this adds chips to the table that were not in play before',
-    ),
-});
-export const addSeatResponseSchema = gameSnapshotSchema;
 
 /** Start Hand Schemas */
 

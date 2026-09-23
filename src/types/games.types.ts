@@ -291,11 +291,6 @@ export type UpdateSeatResponse = z.infer<
   typeof Schemas.updateSeatResponseSchema
 >;
 
-/** Add Seat Types */
-
-export type AddSeatData = z.infer<typeof Schemas.addSeatDataSchema>;
-export type AddSeatResponse = z.infer<typeof Schemas.addSeatResponseSchema>;
-
 /** Start Hand Types */
 
 export type StartHandResponse = z.infer<typeof Schemas.startHandResponseSchema>;
