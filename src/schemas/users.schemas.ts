@@ -1,6 +1,7 @@
+import { Plan } from '@/types/plans.types';
 import { UserRole } from '@/types/users.types';
 import * as Constants from '@constants/users.constants';
-import { buildFileUrl, fileEntitySchema } from '@schemas/files.schemas';
+import { fileEntitySchema } from '@schemas/files.schemas';
 import { loadableRelation } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
@@ -15,6 +16,9 @@ export const userEntitySchema = z.object({
     .nullish()
     .describe('The avatar file of the user (uuid, or the file when loaded)'),
   role: z.enum(UserRole).describe('The role of the user'),
+  plan: z
+    .enum([Plan.Free, Plan.Premium])
+    .describe('The subscription plan of the user'),
   createdAt: z.date().describe('The date when the user was created'),
   updatedAt: z.date().describe('The date when the user was last updated'),
   deletedAt: z.date().nullish().describe('The date when the user was deleted'),
@@ -25,16 +29,12 @@ export const userEntitySchema = z.object({
 });
 
 export const serializedUserSchema = userEntitySchema
-  .omit({ password: true, googleId: true })
-  .transform(({ avatar, ...user }) => {
-    const avatarUuid = typeof avatar === 'string' ? avatar : avatar?.uuid;
-
-    return {
-      ...user,
-      displayName: user.displayName ?? user.username,
-      avatarUrl: avatarUuid ? buildFileUrl(avatarUuid) : null,
-    };
-  });
+  .omit({ avatar: true, password: true, googleId: true })
+  .extend({ avatarUrl: z.url().nullable() })
+  .transform((user) => ({
+    ...user,
+    displayName: user.displayName ?? user.username,
+  }));
 
 /** User Input Schemas */
 
@@ -60,8 +60,16 @@ export const userInputSchema = z.object({
     .describe('The email of the user'),
   password: z
     .string()
-    .min(Constants.PASSWORD_MIN_LENGTH)
     .max(Constants.PASSWORD_MAX_LENGTH)
+    .superRefine((password, ctx) => {
+      for (const rule of Constants.PASSWORD_RULES)
+        if (!rule.test(password))
+          ctx.addIssue({
+            code: 'custom',
+            message: rule.message,
+            params: { rule: rule.id },
+          });
+    })
     .describe('The password of the user'),
 });
 

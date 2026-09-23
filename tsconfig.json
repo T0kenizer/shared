@@ -27,6 +27,7 @@
     "paths": {
       "@constants/*": ["./src/constants/*"],
       "@schemas/*": ["./src/schemas/*"],
+      "@utils/*": ["./src/utils/*"],
       "@/*": ["./src/*"]
     }
   },
