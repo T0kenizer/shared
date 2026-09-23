@@ -60,8 +60,16 @@ export const userInputSchema = z.object({
     .describe('The email of the user'),
   password: z
     .string()
-    .min(Constants.PASSWORD_MIN_LENGTH)
     .max(Constants.PASSWORD_MAX_LENGTH)
+    .superRefine((password, ctx) => {
+      for (const rule of Constants.PASSWORD_RULES)
+        if (!rule.test(password))
+          ctx.addIssue({
+            code: 'custom',
+            message: rule.message,
+            params: { rule: rule.id },
+          });
+    })
     .describe('The password of the user'),
 });
 
