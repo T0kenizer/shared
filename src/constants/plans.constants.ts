@@ -17,7 +17,9 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: true,
-      modes: [GameMode.Poker],
+      // The free mode ships to every plan that can open a table at all: it is
+      // an experiment, not a perk, and gating it would make it look finished.
+      modes: [GameMode.Poker, GameMode.Free],
       canCustomizeRules: false,
       maxSeats: 4,
     },
@@ -26,7 +28,7 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: true,
-      modes: [GameMode.Poker],
+      modes: [GameMode.Poker, GameMode.Free],
       canCustomizeRules: true,
       maxSeats: 12,
     },

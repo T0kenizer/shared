@@ -4,12 +4,19 @@ import { z } from 'zod';
 /**
  * The game a table plays. Everything else about a session hangs off this one
  * choice: the mode decides which rules apply, which parameters the host is even
- * asked for, and how a hand is played out. There is one today; a second mode
- * adds an entry here and a config member to `gameConfigSchema`, and nothing in
- * between has to be re-litigated.
+ * asked for, and how a deal is played out. A further mode adds an entry here
+ * and a config member to `gameConfigSchema`, and nothing in between has to be
+ * re-litigated.
  */
 export enum GameMode {
   Poker = 'POKER',
+  /**
+   * The open table: the host describes the game — the moves, the opening bets,
+   * how the turn travels — and the runtime only keeps the chips honest. It
+   * predates poker and is kept as an experiment, because a table that can
+   * express any game can also express one that does not work.
+   */
+  Free = 'FREE',
 }
 
 /** Poker Rule Enums */
@@ -100,6 +107,65 @@ export enum HandEndReason {
   Showdown = 'SHOWDOWN',
 }
 
+/** Free Mode Rule Enums */
+
+/**
+ * How the chips in play are pooled. A single pot is the only thing the free
+ * runtime settles today; side pots are declared here because a table that
+ * allows all-ins eventually needs them, and a host has to be able to see that
+ * they are not on offer yet.
+ */
+export enum PotMode {
+  Single = 'SINGLE',
+  MultipleSidepots = 'MULTIPLE_SIDEPOTS',
+}
+
+/** Where the pot goes when a round settles. */
+export enum PayoutMode {
+  WinnerTakesAll = 'WINNER_TAKES_ALL',
+  Split = 'SPLIT',
+  PeerToPeer = 'PEER_TO_PEER',
+}
+
+/**
+ * What kind of number a move carries, if any. This is the whole of what the
+ * free runtime knows about an amount: it has no notion of a bet to match, so
+ * the shape is the host's to declare rather than the table's to derive.
+ */
+export enum AmountForm {
+  None = 'NONE',
+  Free = 'FREE',
+  Constrained = 'CONSTRAINED',
+  Raise = 'RAISE',
+}
+
+/** How the turn travels round the table. */
+export enum TurnRegime {
+  Sequential = 'SEQUENTIAL',
+  /** A move can open a window in which anybody may cut in and take the turn. */
+  SequentialInterruptible = 'SEQUENTIAL_INTERRUPTIBLE',
+  Simultaneous = 'SIMULTANEOUS',
+}
+
+export enum Direction {
+  Clockwise = 'CLOCKWISE',
+  CounterClockwise = 'COUNTER_CLOCKWISE',
+}
+
+/** Who decides a round is over: the table, or the rules it declared. */
+export enum EndResolution {
+  ManualHost = 'MANUAL_HOST',
+  Automatic = 'AUTOMATIC',
+}
+
+/** Free Mode Runtime Enums */
+
+export enum RoundStatus {
+  Init = 'INIT',
+  InProgress = 'IN_PROGRESS',
+  Resolved = 'RESOLVED',
+}
+
 /** Game Runtime Enums */
 
 export enum GameSessionStatus {
@@ -136,6 +202,13 @@ export type PokerRules = z.infer<typeof Schemas.pokerRulesSchema>;
 export type SeatDeclaration = z.infer<typeof Schemas.seatDeclarationSchema>;
 export type SeatingPolicy = z.infer<typeof Schemas.seatingPolicySchema>;
 export type PokerGameConfig = z.infer<typeof Schemas.pokerGameConfigSchema>;
+export type ActionDef = z.infer<typeof Schemas.actionDefSchema>;
+export type ForcedBet = z.infer<typeof Schemas.forcedBetSchema>;
+export type EconomyPolicy = z.infer<typeof Schemas.economyPolicySchema>;
+export type TurnPolicy = z.infer<typeof Schemas.turnPolicySchema>;
+export type EndCondition = z.infer<typeof Schemas.endConditionSchema>;
+export type EndPolicy = z.infer<typeof Schemas.endPolicySchema>;
+export type FreeGameConfig = z.infer<typeof Schemas.freeGameConfigSchema>;
 export type GameConfig = z.infer<typeof Schemas.gameConfigSchema>;
 export type GameModeDescriptor = z.infer<
   typeof Schemas.gameModeDescriptorSchema
@@ -155,10 +228,16 @@ export type LegalAction = z.infer<typeof Schemas.legalActionSchema>;
 export type BettingSnapshot = z.infer<typeof Schemas.bettingSnapshotSchema>;
 export type HandEventSnapshot = z.infer<typeof Schemas.handEventSchema>;
 export type HandSnapshot = z.infer<typeof Schemas.handSnapshotSchema>;
+export type ActionSnapshot = z.infer<typeof Schemas.actionSnapshotSchema>;
+export type RoundSnapshot = z.infer<typeof Schemas.roundSnapshotSchema>;
+export type PokerGameSnapshot = z.infer<typeof Schemas.pokerGameSnapshotSchema>;
+export type FreeGameSnapshot = z.infer<typeof Schemas.freeGameSnapshotSchema>;
 export type GameSnapshot = z.infer<typeof Schemas.gameSnapshotSchema>;
 export type HandPayout = z.infer<typeof Schemas.handPayoutSchema>;
 export type PotAward = z.infer<typeof Schemas.potAwardSchema>;
 export type HandResolution = z.infer<typeof Schemas.handResolutionSchema>;
+export type RoundResolution = z.infer<typeof Schemas.roundResolutionSchema>;
+export type GameResolution = z.infer<typeof Schemas.gameResolutionSchema>;
 
 /** Create Game Session Types */
 
@@ -221,6 +300,12 @@ export type AddSeatResponse = z.infer<typeof Schemas.addSeatResponseSchema>;
 
 export type StartHandResponse = z.infer<typeof Schemas.startHandResponseSchema>;
 
+/** Start Round Types */
+
+export type StartRoundResponse = z.infer<
+  typeof Schemas.startRoundResponseSchema
+>;
+
 /** Submit Action Types */
 
 export type SubmitActionData = z.infer<typeof Schemas.submitActionDataSchema>;
@@ -235,6 +320,13 @@ export type DeclareWinnersData = z.infer<
 >;
 export type DeclareWinnersResponse = z.infer<
   typeof Schemas.declareWinnersResponseSchema
+>;
+
+/** Resolve Round Types */
+
+export type ResolveRoundData = z.infer<typeof Schemas.resolveRoundDataSchema>;
+export type ResolveRoundResponse = z.infer<
+  typeof Schemas.resolveRoundResponseSchema
 >;
 
 /** Close Game Session Types */
