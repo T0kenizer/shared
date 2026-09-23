@@ -58,10 +58,20 @@ export const userInputSchema = z.object({
     .email()
     .max(Constants.EMAIL_MAX_LENGTH)
     .describe('The email of the user'),
+  // Every rule reports on its own so the client can tell which requirement is
+  // still missing instead of just "invalid password".
   password: z
     .string()
-    .min(Constants.PASSWORD_MIN_LENGTH)
     .max(Constants.PASSWORD_MAX_LENGTH)
+    .superRefine((password, ctx) => {
+      for (const rule of Constants.PASSWORD_RULES)
+        if (!rule.test(password))
+          ctx.addIssue({
+            code: 'custom',
+            message: rule.message,
+            params: { rule: rule.id },
+          });
+    })
     .describe('The password of the user'),
 });
 
