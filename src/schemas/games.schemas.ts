@@ -500,6 +500,16 @@ const gameSnapshotBaseSchema = z.object({
   participants: z
     .array(participantSnapshotSchema)
     .describe('The participants of the game session, ordered by seat'),
+  dealsPlayed: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe(
+      'How many deals the table has got through — hands at a poker table, ' +
+        'rounds at a free one. Counted server-side because the clients only ' +
+        'ever see the deal in front of them: it is the one number the recap ' +
+        'at the end cannot work out from the final standings.',
+    ),
   chipModel: z
     .enum(ChipModel)
     .describe(
