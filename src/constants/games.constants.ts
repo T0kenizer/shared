@@ -6,9 +6,9 @@ export const GAME_CLIENT_MESSAGES = {
   ATTACH: 'game:attach',
   UPDATE_SEAT: 'game:update_seat',
   ADD_SEAT: 'game:add_seat',
-  START_ROUND: 'game:start_round',
+  START_HAND: 'game:start_hand',
   ACTION: 'game:action',
-  RESOLVE: 'game:resolve',
+  DECLARE_WINNERS: 'game:declare_winners',
   SNAPSHOT: 'game:snapshot',
   CLOSE: 'game:close',
 } as const;
@@ -17,9 +17,9 @@ export const GAME_CLIENT_MESSAGES = {
 export const GAME_SERVER_EVENTS = {
   PARTICIPANT_JOINED: 'game:participant_joined',
   PARTICIPANT_UPDATED: 'game:participant_updated',
-  ROUND_STARTED: 'game:round_started',
+  HAND_STARTED: 'game:hand_started',
   ACTION_APPLIED: 'game:action_applied',
-  ROUND_RESOLVED: 'game:round_resolved',
+  HAND_SETTLED: 'game:hand_settled',
   SESSION_CLOSED: 'game:session_closed',
   PARTICIPANT_DISCONNECTED: 'game:participant_disconnected',
   PARTICIPANT_LEFT: 'game:participant_left',

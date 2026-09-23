@@ -1,58 +1,68 @@
 import {
-  AmountForm,
+  BettingStructure,
   ChipModel,
-  Direction,
-  EndResolution,
+  GameMode,
   GameSessionStatus,
+  HandEndReason,
+  HandEventType,
+  HandStatus,
   ParticipantRole,
   ParticipantStatus,
-  PayoutMode,
-  PotMode,
-  RoundStatus,
-  TurnRegime,
+  PokerAction,
+  Street,
 } from '@/types/games.types';
 import { JOIN_CODE_REGEX } from '@constants/games.constants';
 import { z } from 'zod';
 
-/** Game Config Schemas */
+/** Poker Rule Schemas */
 
-export const actionDefSchema = z.object({
-  id: z.string().min(1).describe('The identifier of the action definition'),
-  label: z.string().min(1).describe('The display label of the action'),
-  amountForm: z
-    .enum(AmountForm)
-    .describe('How the action constrains its amount'),
-  grantsInterruption: z
-    .boolean()
-    .describe('Whether submitting this action opens an interruption window'),
-  foldsParticipant: z
-    .boolean()
-    .optional()
-    .describe('Whether submitting this action folds the participant'),
-});
+/**
+ * The stakes. Two numbers, and they are the only forced bets poker has: the
+ * seats that owe them follow from the dealer button, so there is nothing to
+ * configure about _who_ pays — only how much.
+ */
+export const blindsSchema = z
+  .object({
+    small: z
+      .number()
+      .int()
+      .positive()
+      .describe('The small blind, posted by the seat left of the button'),
+    big: z
+      .number()
+      .int()
+      .positive()
+      .describe('The big blind, posted by the seat after the small blind'),
+  })
+  .refine((blinds) => blinds.big >= blinds.small, {
+    message: 'The big blind cannot be smaller than the small blind',
+    path: ['big'],
+  });
 
-export const forcedBetSchema = z.object({
-  label: z.string().min(1).describe('The display label of the forced bet'),
-  amount: z.number().int().positive().describe('The amount of the forced bet'),
-  seatOffset: z
+/**
+ * Everything a poker table is set up with. Deliberately short: the rest of
+ * poker is not a setting. Which actions are legal, who acts first, when a
+ * betting round closes and how the pot is split all follow from these four
+ * values and the state of play, and the server derives them hand by hand.
+ */
+export const pokerRulesSchema = z.object({
+  blinds: blindsSchema,
+  ante: z
     .number()
     .int()
     .nonnegative()
-    .describe('Position relative to seat 0 (dealer anchor)'),
+    .describe('Posted by every seat before the blinds; 0 for no ante'),
+  bettingStructure: z
+    .enum(BettingStructure)
+    .describe('What caps a bet or a raise'),
+  chipModel: z.enum(ChipModel).describe('How stacks are drawn at the table'),
 });
 
-export const economyPolicySchema = z.object({
-  potMode: z.enum(PotMode).describe('How pots are formed'),
-  chipModel: z.enum(ChipModel).describe('How balances are modelled'),
-  forcedBets: z
-    .array(forcedBetSchema)
-    .describe('Forced bets applied when a round starts'),
-  payoutMode: z.enum(PayoutMode).describe('How the pot is paid out'),
-});
+/** Seating Schemas */
 
 /**
- * A single declared seat: its default (pre-claim) name and starting balance.
- * The host acts on behalf of a seat until a player claims it.
+ * A single declared seat: its default (pre-claim) name and starting stack. The
+ * host acts on behalf of a seat until a player claims it.
  */
 export const seatDeclarationSchema = z.object({
   displayName: z
@@ -65,9 +75,7 @@ export const seatDeclarationSchema = z.object({
     .int()
     .nonnegative()
     .optional()
-    .describe(
-      'Starting balance for this seat; omit to use the session default',
-    ),
+    .describe('Starting stack for this seat; omit to use the table default'),
 });
 
 /**
@@ -84,8 +92,8 @@ export const seatingPolicySchema = z.object({
   defaultInitialBalance: z
     .number()
     .int()
-    .nonnegative()
-    .describe('The starting balance of a seat that does not set its own'),
+    .positive()
+    .describe('The starting stack of a seat that does not set its own'),
   allowMidGameClaims: z
     .boolean()
     .default(true)
@@ -98,58 +106,59 @@ export const seatingPolicySchema = z.object({
     .default(false)
     .describe(
       'Whether the host may open further seats once every declared seat is ' +
-        "claimed. Still capped by the owner's plan, and only between rounds: " +
-        'a seat added mid-round would join a rotation already under way',
+        "claimed. Still capped by the owner's plan, and only between hands: " +
+        'a seat added mid-hand would join a rotation already under way',
     ),
 });
 
-export const turnPolicySchema = z.object({
-  regime: z.enum(TurnRegime).describe('How turns are taken'),
-  direction: z.enum(Direction).describe('The rotation direction'),
-  interruptionWindow: z
-    .number()
-    .int()
-    .positive()
-    .nullable()
-    .describe(
-      'Interruption window in milliseconds; null when the regime never auto-closes it',
-    ),
-});
+/** Game Config Schemas */
 
-/** Placeholder — conditions are unused in v0 (MANUAL_HOST always empty). */
-export const endConditionSchema = z.object({
-  type: z.string().describe('The type of the end condition'),
-  params: z.unknown().describe('The parameters of the end condition'),
-});
-
-export const endPolicySchema = z.object({
-  resolution: z.enum(EndResolution).describe('How rounds are resolved'),
-  conditions: z
-    .array(endConditionSchema)
-    .describe('Conditions evaluated for automatic resolution'),
-});
-
-export const gameConfigSchema = z.object({
+/**
+ * A poker table, whole. `mode` is the discriminator: it is what says which
+ * rules the runtime is about to apply, and it travels with the config
+ * everywhere the config goes — into the database column, out of the API, back
+ * into the runtime on a re-open.
+ */
+export const pokerGameConfigSchema = z.object({
+  mode: z.literal(GameMode.Poker),
   seating: seatingPolicySchema,
-  economy: economyPolicySchema,
-  actionCatalog: z
-    .array(actionDefSchema)
-    .min(1)
-    .describe('The actions available during a round'),
-  turnPolicy: turnPolicySchema,
-  endPolicy: endPolicySchema,
+  rules: pokerRulesSchema,
 });
 
-export const gameTemplateSchema = z.object({
-  id: z.string().min(1).describe('Stable identifier of the template'),
-  name: z.string().min(1).describe('Display name of the template'),
-  description: z.string().min(1).describe('What this template sets up'),
-  config: gameConfigSchema.describe('The config this template opens with'),
+/**
+ * The config of a session, one member per game mode.
+ *
+ * A union rather than a bag of independent switches, because the parameters of
+ * one mode mean nothing to another: there is no coherent table with a poker
+ * blind and some other mode's turn timer, and a shape that can express one is a
+ * shape somebody eventually creates.
+ */
+export const gameConfigSchema = z.discriminatedUnion('mode', [
+  pokerGameConfigSchema,
+]);
+
+/** What a mode is called, and the table it opens with. */
+export const gameModeDescriptorSchema = z.object({
+  mode: z.enum(GameMode).describe('The mode this descriptor stands for'),
+  name: z.string().min(1).describe('Display name of the mode'),
+  description: z.string().min(1).describe('How the mode plays, in a line'),
+  defaults: gameConfigSchema.describe('The table this mode opens with'),
 });
 
-export const listGameTemplatesResponseSchema = z.array(gameTemplateSchema);
+export const listGameModesResponseSchema = z.array(gameModeDescriptorSchema);
 
 /** Game Snapshot Schemas */
+
+/**
+ * What the table is playing for. Never a secret — the stakes are announced
+ * before anybody sits down — so they ride on the snapshot, unlike the rest of
+ * the config, which is the host's business alone.
+ */
+export const tableStakesSchema = z.object({
+  blinds: blindsSchema,
+  ante: z.number().int().nonnegative(),
+  bettingStructure: z.enum(BettingStructure),
+});
 
 /**
  * One chair, fully described. Everything a client needs to draw it is answered
@@ -180,7 +189,7 @@ export const participantSnapshotSchema = z.object({
         'anonymously — in which case the client falls back to the same avatar ' +
         'placeholder it uses everywhere else.',
     ),
-  balance: z.number().int().describe('The current balance of the participant'),
+  balance: z.number().int().describe('The stack in front of the seat'),
   seatIndex: z
     .number()
     .int()
@@ -206,41 +215,116 @@ export const participantSnapshotSchema = z.object({
 
 export const potSnapshotSchema = z.object({
   id: z.uuid().describe('The runtime identifier of the pot'),
-  amount: z.number().int().nonnegative().describe('The amount in the pot'),
+  amount: z.number().int().nonnegative().describe('The chips in the pot'),
   eligibleParticipants: z
     .array(z.uuid())
-    .describe('The participants eligible to win the pot'),
+    .describe(
+      'The seats that paid into this pot and may still take it. A side pot ' +
+        'exists precisely because somebody could not match the betting, so ' +
+        'this is shorter than the contender list, never equal to it by chance.',
+    ),
+  /** A main pot is the one everybody in the hand paid into. */
+  isSidePot: z
+    .boolean()
+    .describe('Whether this pot was split off by an all-in'),
 });
 
-export const actionSnapshotSchema = z.object({
-  id: z.uuid().describe('The runtime identifier of the action'),
-  participantId: z.uuid().describe('The participant who acted'),
-  definitionId: z.string().describe('The action definition that was applied'),
-  amount: z.number().int().optional().describe('The amount of the action'),
-  timestamp: z.iso.datetime().describe('When the action was applied'),
+/**
+ * One move the active seat may make right now, as the server has worked it out.
+ *
+ * `min`/`max` are **totals for the current street**, not increments: "raise to
+ * 120", not "raise by 80". Poker is bet at totals, the runtime settles at
+ * totals, and the two conventions meeting in the middle of a client is how a
+ * player ends up putting in twice what they meant to. A move that takes no
+ * amount carries neither; a move whose amount is fixed — a call, an all-in —
+ * carries them equal.
+ */
+export const legalActionSchema = z.object({
+  action: z.enum(PokerAction).describe('The move'),
+  label: z.string().min(1).describe('What to call it on a button'),
+  min: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional()
+    .describe('Smallest total this seat may commit on this street'),
+  max: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional()
+    .describe('Largest total this seat may commit on this street'),
 });
 
-export const roundSnapshotSchema = z.object({
-  id: z.uuid().describe('The runtime identifier of the round'),
-  status: z.enum(RoundStatus).describe('The status of the round'),
-  pots: z.array(potSnapshotSchema).describe('The pots of the round'),
-  turn: z.object({
-    activeParticipant: z.uuid().describe('The participant whose turn it is'),
-    interruptionOpen: z
-      .boolean()
-      .describe('Whether an interruption window is open'),
-    pendingClaims: z
-      .number()
-      .int()
-      .nonnegative()
-      .describe('The number of pending interruption claims'),
-    legalActions: z
-      .array(actionDefSchema)
-      .describe('The actions currently legal for the active participant'),
-  }),
-  actionLog: z
-    .array(actionSnapshotSchema)
-    .describe('The actions applied during the round'),
+/** The open betting round: what is owed, by whom, and what they may do. */
+export const bettingSnapshotSchema = z.object({
+  activeParticipant: z
+    .uuid()
+    .nullable()
+    .describe('The seat that owes an action; null once the street is closed'),
+  currentBet: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('The total each seat must have committed on this street to stay'),
+  minRaiseTo: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('The smallest legal raise, as a total for this street'),
+  committed: z
+    .record(z.uuid(), z.number().int().nonnegative())
+    .describe('What each seat has committed on this street so far'),
+  legalActions: z
+    .array(legalActionSchema)
+    .describe('What the active seat may do; empty when it is nobody’s turn'),
+});
+
+export const handEventSchema = z.object({
+  id: z.uuid().describe('The runtime identifier of the event'),
+  participantId: z
+    .uuid()
+    .nullable()
+    .describe('Who acted; null for an event the table itself produced'),
+  type: z.enum(HandEventType).describe('What happened'),
+  amount: z
+    .number()
+    .int()
+    .optional()
+    .describe('Chips committed, for the events that move any'),
+  street: z.enum(Street).describe('The street it happened on'),
+  timestamp: z.iso.datetime().describe('When it happened'),
+});
+
+/**
+ * One deal, from the blinds to the payout.
+ *
+ * A hand is not a betting round: it holds four of them (`street`), and the
+ * betting state below is the one currently open. Keeping the two apart is what
+ * lets "the betting is finished" and "the hand is finished" be different
+ * answers, which in poker they nearly always are.
+ */
+export const handSnapshotSchema = z.object({
+  id: z.uuid().describe('The runtime identifier of the hand'),
+  handNumber: z
+    .number()
+    .int()
+    .positive()
+    .describe('Which hand of the session this is, from 1'),
+  status: z.enum(HandStatus).describe('The status of the hand'),
+  street: z.enum(Street).describe('The betting round currently open'),
+  dealerParticipant: z.uuid().describe('The seat holding the button'),
+  smallBlindParticipant: z
+    .uuid()
+    .describe('The seat that posted the small blind'),
+  bigBlindParticipant: z.uuid().describe('The seat that posted the big blind'),
+  pots: z
+    .array(potSnapshotSchema)
+    .describe('The main pot, then any side pots, in the order they formed'),
+  betting: bettingSnapshotSchema,
+  events: z
+    .array(handEventSchema)
+    .describe('Everything that happened, in order'),
 });
 
 /**
@@ -255,6 +339,12 @@ export const joinCodeSchema = z
 export const gameSnapshotSchema = z.object({
   id: z.uuid().describe('The unique identifier of the game session'),
   name: z.string().describe('The display name of the game session'),
+  mode: z
+    .enum(GameMode)
+    .describe(
+      'The game being played. A client reads it to know which table to draw ' +
+        'and which vocabulary to speak; everything below is that mode’s.',
+    ),
   joinCode: joinCodeSchema
     .nullable()
     .describe(
@@ -265,16 +355,18 @@ export const gameSnapshotSchema = z.object({
   participants: z
     .array(participantSnapshotSchema)
     .describe('The participants of the game session, ordered by seat'),
-  currentRound: roundSnapshotSchema
+  currentHand: handSnapshotSchema
     .nullable()
-    .describe('The round in progress, if any'),
+    .describe('The hand in progress, if any'),
+  stakes: tableStakesSchema.describe(
+    'What the table plays for. Public by nature, unlike the rest of the config',
+  ),
   chipModel: z
     .enum(ChipModel)
     .describe(
-      'How the balances in this snapshot are meant to be read: an abstract ' +
+      'How the stacks in this snapshot are meant to be read: an abstract ' +
         'running total, or chips with distinct denominations. Carried on the ' +
-        'snapshot because it changes how every stack at the table is drawn, ' +
-        "and the rest of the config is none of a player's business",
+        'snapshot because it changes how every stack at the table is drawn',
     ),
   canAddSeat: z
     .boolean()
@@ -287,12 +379,18 @@ export const gameSnapshotSchema = z.object({
     ),
 });
 
-export const roundResolutionSchema = z.object({
-  roundId: z.uuid().describe('The round that settled'),
-  reason: z
-    .enum(['LAST_PLAYER_STANDING', 'MANUAL_HOST'])
-    .describe('Why the round settled'),
-  winners: z.array(z.uuid()).describe('The participants awarded the pot'),
+export const handPayoutSchema = z.object({
+  participantId: z.uuid().describe('The seat paid'),
+  amount: z.number().int().positive().describe('The chips it took'),
+});
+
+export const handResolutionSchema = z.object({
+  handId: z.uuid().describe('The hand that settled'),
+  reason: z.enum(HandEndReason).describe('Why the hand settled'),
+  winners: z.array(z.uuid()).describe('The seats awarded a pot'),
+  payouts: z
+    .array(handPayoutSchema)
+    .describe('What each winner actually took, side pots included'),
 });
 
 /** Create Game Session Schemas */
@@ -305,33 +403,33 @@ export const createGameSessionDataSchema = z
       .max(60)
       .optional()
       .describe('The display name of the game; omit for a generated one'),
-    templateId: z
-      .string()
-      .min(1)
-      .optional()
-      .describe('A template to open on; mutually exclusive with config'),
+    mode: z
+      .enum(GameMode)
+      .describe('The game to play. Every table starts from a mode'),
     config: gameConfigSchema
       .optional()
       .describe(
-        'A custom game config; mutually exclusive with templateId and seats ' +
-          '(it already carries its own seating). Omit config and templateId ' +
-          'both to use the server default preset.',
+        "A full config for that mode; omit to open on the mode's defaults. " +
+          'Mutually exclusive with seats (a config already carries its own).',
       ),
     seats: z
       .array(seatDeclarationSchema)
       .min(2)
       .optional()
       .describe(
-        "Seats to open with instead of the template's or default preset's " +
-          'own; mutually exclusive with config',
+        "Seats to open with instead of the mode's defaults; mutually " +
+          'exclusive with config',
       ),
-  })
-  .refine((data) => !(data.templateId && data.config), {
-    message: 'Provide either templateId or config, not both',
   })
   .refine((data) => !(data.config && data.seats), {
     message: 'seats is not allowed together with config',
+    path: ['seats'],
+  })
+  .refine((data) => !data.config || data.config.mode === data.mode, {
+    message: 'The config must be for the chosen mode',
+    path: ['config'],
   });
+
 /**
  * Creating a game seats the owner in the HOST seat, so it answers exactly as a
  * join does — snapshot, token, and the seat the caller now holds.
@@ -383,6 +481,7 @@ export const joinByCodeResponseSchema = z.object({
  */
 export const publicRoomViewSchema = z.object({
   name: z.string().describe('The display name of the game'),
+  mode: z.enum(GameMode).describe('The game being played'),
   status: z.enum(GameSessionStatus).describe('The status of the game session'),
   playerCount: z
     .number()
@@ -499,18 +598,18 @@ export const addSeatDataSchema = z.object({
   initialBalance: z
     .number()
     .int()
-    .nonnegative()
+    .positive()
     .optional()
     .describe(
-      "Starting stack for the new chair; omit to use the session's default. " +
+      "Starting stack for the new chair; omit to use the table's default. " +
         'Note this adds chips to the table that were not in play before',
     ),
 });
 export const addSeatResponseSchema = gameSnapshotSchema;
 
-/** Start Round Schemas */
+/** Start Hand Schemas */
 
-export const startRoundResponseSchema = gameSnapshotSchema;
+export const startHandResponseSchema = gameSnapshotSchema;
 
 /** Submit Action Schemas */
 
@@ -522,32 +621,56 @@ export const submitActionDataSchema = z.object({
       'Host only: the unclaimed seat to act on behalf of. Omit to act on ' +
         "the caller's own seat; rejected if the seat is already claimed.",
     ),
-  definitionId: z.string().min(1).describe('The action definition to apply'),
+  action: z.enum(PokerAction).describe('The move to play'),
   amount: z
     .number()
     .int()
     .nonnegative()
     .optional()
-    .describe('The amount of the action, when its form requires one'),
+    .describe(
+      'For a bet or a raise: the **total** this seat will have committed on ' +
+        'this street, matching the min/max of the legal action. Omit for the ' +
+        'moves whose amount is not the player’s to choose.',
+    ),
 });
+
 export const submitActionResponseSchema = z.object({
   snapshot: gameSnapshotSchema,
-  resolution: roundResolutionSchema
+  resolution: handResolutionSchema
     .optional()
-    .describe('Present when the action settled the round'),
+    .describe('Present when the action settled the hand'),
 });
 
-/** Resolve Round Schemas */
+/** Declare Winners Schemas */
 
-export const resolveRoundDataSchema = z.object({
+export const potAwardSchema = z.object({
+  potId: z.uuid().describe('The pot being awarded, as the snapshot names it'),
   winnerParticipantIds: z
     .array(z.uuid())
-    .optional()
-    .describe('The winning seats; omit to award every remaining contender'),
+    .min(1)
+    .describe('The seats that take it; several for a split'),
 });
-export const resolveRoundResponseSchema = z.object({
+
+/**
+ * The showdown, as a companion app can know it: the cards are on the physical
+ * table and the app never sees them, so the winner is declared rather than
+ * computed. Only reachable once the betting is finished — before that, the
+ * chips are still moving.
+ *
+ * Declared pot by pot, because a side pot is a different contest with a
+ * different field: the short stack who won the main pot never paid into the one
+ * above it, and a flat list of winners has no way to say who did. Nearly every
+ * hand has exactly one pot and therefore exactly one entry here.
+ */
+export const declareWinnersDataSchema = z.object({
+  awards: z
+    .array(potAwardSchema)
+    .min(1)
+    .describe('One entry per pot in the hand, each naming who takes it'),
+});
+export const declareWinnersResponseSchema = z.object({
   snapshot: gameSnapshotSchema,
-  resolution: roundResolutionSchema,
+  resolution: handResolutionSchema,
 });
 
 /** Close Game Session Schemas */

@@ -1,3 +1,4 @@
+import { GameMode } from '@/types/games.types';
 import { Feature, FeatureMetadataMap, Plan } from '@/types/plans.types';
 
 type PlanMetadata = { [F in Feature]: FeatureMetadataMap[F] };
@@ -7,8 +8,8 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: false,
-      canUseTemplates: false,
-      canCustomize: false,
+      modes: [],
+      canCustomizeRules: false,
       maxSeats: 0,
     },
   },
@@ -16,8 +17,8 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: true,
-      canUseTemplates: true,
-      canCustomize: false,
+      modes: [GameMode.Poker],
+      canCustomizeRules: false,
       maxSeats: 4,
     },
   },
@@ -25,8 +26,8 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: true,
-      canUseTemplates: true,
-      canCustomize: true,
+      modes: [GameMode.Poker],
+      canCustomizeRules: true,
       maxSeats: 12,
     },
   },
@@ -47,10 +48,19 @@ export function maxSeatsFor(plan: Plan): number {
   return featureMetadata(plan, Feature.CreateGame).maxSeats;
 }
 
-export function canCustomizeGame(plan: Plan): boolean {
-  return featureMetadata(plan, Feature.CreateGame).canCustomize;
+/** The modes this plan may open a table in. */
+export function gameModesFor(plan: Plan): GameMode[] {
+  return featureMetadata(plan, Feature.CreateGame).modes;
 }
 
-export function canUseTemplates(plan: Plan): boolean {
-  return featureMetadata(plan, Feature.CreateGame).canUseTemplates;
+export function canUseMode(plan: Plan, mode: GameMode): boolean {
+  return gameModesFor(plan).includes(mode);
+}
+
+/**
+ * Whether the host may change the mode's parameters rather than take them as
+ * they come.
+ */
+export function canCustomizeRules(plan: Plan): boolean {
+  return featureMetadata(plan, Feature.CreateGame).canCustomizeRules;
 }
