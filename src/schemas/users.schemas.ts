@@ -58,8 +58,6 @@ export const userInputSchema = z.object({
     .email()
     .max(Constants.EMAIL_MAX_LENGTH)
     .describe('The email of the user'),
-  // Every rule reports on its own so the client can tell which requirement is
-  // still missing instead of just "invalid password".
   password: z
     .string()
     .max(Constants.PASSWORD_MAX_LENGTH)
