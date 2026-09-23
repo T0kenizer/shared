@@ -1,3 +1,4 @@
+import { GameMode } from '@/types/games.types';
 import { Feature, FeatureMetadataMap, Plan } from '@/types/plans.types';
 
 type PlanMetadata = { [F in Feature]: FeatureMetadataMap[F] };
@@ -7,8 +8,7 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: false,
-      canUseTemplates: false,
-      canCustomize: false,
+      modes: [],
       maxSeats: 0,
     },
   },
@@ -16,8 +16,7 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: true,
-      canUseTemplates: true,
-      canCustomize: false,
+      modes: [GameMode.Poker],
       maxSeats: 4,
     },
   },
@@ -25,8 +24,9 @@ export const PLAN_METADATA: Record<Plan, PlanMetadata> = {
     [Feature.JoinGame]: { access: true },
     [Feature.CreateGame]: {
       access: true,
-      canUseTemplates: true,
-      canCustomize: true,
+      // The free table is the paid half of the offer — and buying it is
+      // buying the right to configure it, because that is all the mode is.
+      modes: [GameMode.Poker, GameMode.Free],
       maxSeats: 12,
     },
   },
@@ -47,10 +47,11 @@ export function maxSeatsFor(plan: Plan): number {
   return featureMetadata(plan, Feature.CreateGame).maxSeats;
 }
 
-export function canCustomizeGame(plan: Plan): boolean {
-  return featureMetadata(plan, Feature.CreateGame).canCustomize;
+/** The modes this plan may open a table in. */
+export function gameModesFor(plan: Plan): GameMode[] {
+  return featureMetadata(plan, Feature.CreateGame).modes;
 }
 
-export function canUseTemplates(plan: Plan): boolean {
-  return featureMetadata(plan, Feature.CreateGame).canUseTemplates;
+export function canUseMode(plan: Plan, mode: GameMode): boolean {
+  return gameModesFor(plan).includes(mode);
 }
