@@ -18,17 +18,17 @@ export interface FeatureMetadataMap {
   [Feature.CreateGame]: {
     access: boolean;
     /**
-     * The modes this plan may open a table in. Choosing the game is the first
-     * thing a host does, so what a plan buys is expressed here in the same
-     * terms — a list of games, not a permission to "use templates".
+     * The modes this plan may open a table in — and the whole of what it buys
+     * about the game itself.
+     *
+     * There is deliberately no separate "may customize the rules" flag beside
+     * it: how configurable a table is belongs to the mode, not to the plan. A
+     * poker table is set up with its stakes and nothing else, because the rest
+     * of poker is not a setting; a free table is nothing _but_ its settings.
+     * Selling the second one and then withholding its parameters would be
+     * selling an empty table.
      */
     modes: GameMode[];
-    /**
-     * Whether the host may change the mode's parameters (the blinds, the ante,
-     * the betting structure) instead of opening on its defaults. Never a
-     * permission to invent rules: the rules belong to the mode.
-     */
-    canCustomizeRules: boolean;
     maxSeats: number;
   };
 }
