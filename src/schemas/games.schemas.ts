@@ -225,7 +225,7 @@ export const participantSnapshotSchema = z.object({
         '("Seat 3"). Always a usable label — clients render it as-is rather ' +
         'than substituting a placeholder of their own for a free seat.',
     ),
-  avatarUrl: z
+  photoUrl: z
     .url()
     .nullable()
     .describe(
