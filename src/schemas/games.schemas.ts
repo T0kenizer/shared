@@ -291,6 +291,13 @@ export const legalActionSchema = z.object({
 });
 
 export const bettingSnapshotSchema = z.object({
+  nextParticipant: z
+    .uuid()
+    .nullable()
+    .optional()
+    .describe(
+      'The next seat currently owing an action; a raise may change the queue',
+    ),
   activeParticipant: z
     .uuid()
     .nullable()
@@ -367,6 +374,13 @@ export const roundSnapshotSchema = z.object({
   status: z.enum(RoundStatus).describe('The status of the round'),
   pots: z.array(potSnapshotSchema).describe('The pots of the round'),
   turn: z.object({
+    nextParticipant: z
+      .uuid()
+      .nullable()
+      .optional()
+      .describe(
+        'The next active seat in turn order; null while the order is undecided',
+      ),
     activeParticipant: z.uuid().describe('The participant whose turn it is'),
     interruptionOpen: z
       .boolean()
