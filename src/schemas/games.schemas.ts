@@ -542,6 +542,16 @@ export const attachSocketResponseSchema = z.object({
   participantId: z.uuid(),
 });
 
+/** Socket Spectate Schemas */
+
+export const spectateSocketDataSchema = z.object({
+  gameUuid: z.uuid().describe('The session the socket is watching'),
+});
+
+export const spectateSocketResponseSchema = z.object({
+  snapshot: gameSnapshotSchema,
+});
+
 /** Join By Code Schemas */
 
 export const joinByCodeDataSchema = z.object({
