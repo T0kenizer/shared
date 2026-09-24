@@ -129,6 +129,7 @@ export enum ParticipantStatus {
 
 export enum GameClientMessage {
   Attach = 'game:attach',
+  Spectate = 'game:spectate',
   UpdateSeat = 'game:update_seat',
   StartHand = 'game:start_hand',
   StartRound = 'game:start_round',
@@ -217,6 +218,15 @@ export type RetrieveGameSessionResponse = z.infer<
 export type AttachSocketData = z.infer<typeof Schemas.attachSocketDataSchema>;
 export type AttachSocketResponse = z.infer<
   typeof Schemas.attachSocketResponseSchema
+>;
+
+/** Socket Spectate Types */
+
+export type SpectateSocketData = z.infer<
+  typeof Schemas.spectateSocketDataSchema
+>;
+export type SpectateSocketResponse = z.infer<
+  typeof Schemas.spectateSocketResponseSchema
 >;
 
 /** Join By Code Types */
