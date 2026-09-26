@@ -2,36 +2,6 @@ import { DeviceType } from '@/types/sessions.types';
 import { serializedUserSchema } from '@schemas/users.schemas';
 import { z } from 'zod';
 
-export const sessionSchema = z.object({
-  user: serializedUserSchema,
-  expiresAt: z.date().describe('The date and time when the session expires'),
-  expiresIn: z
-    .number()
-    .int()
-    .nonnegative()
-    .describe('Milliseconds until the session expires'),
-});
-
-/** Create Session Schemas */
-
-export const createSessionDataSchema = z.object({
-  login: z.string().nonempty().describe('The username or email of the user'),
-  password: z.string().nonempty().describe('The password of the user'),
-  stayConnected: z
-    .boolean()
-    .optional()
-    .describe(
-      'Whether the session should roll forward with activity instead of expiring at a fixed deadline',
-    ),
-});
-export const createSessionResponseSchema = sessionSchema;
-
-/** Retrieve Session Schemas */
-
-export const retrieveSessionResponseSchema = sessionSchema;
-
-/** List User Sessions Schemas */
-
 export const userSessionSchema = z.object({
   id: z
     .string()
@@ -69,6 +39,31 @@ export const userSessionSchema = z.object({
     .nullable()
     .describe('The approximate location of the last request, when known'),
 });
+
+// The current session, as described in the listing, along with its user.
+export const sessionSchema = userSessionSchema.extend({
+  user: serializedUserSchema,
+});
+
+/** Create Session Schemas */
+
+export const createSessionDataSchema = z.object({
+  login: z.string().nonempty().describe('The username or email of the user'),
+  password: z.string().nonempty().describe('The password of the user'),
+  stayConnected: z
+    .boolean()
+    .optional()
+    .describe(
+      'Whether the session should roll forward with activity instead of expiring at a fixed deadline',
+    ),
+});
+export const createSessionResponseSchema = sessionSchema;
+
+/** Retrieve Session Schemas */
+
+export const retrieveSessionResponseSchema = sessionSchema;
+
+/** List User Sessions Schemas */
 
 export const listUserSessionsResponseSchema = z
   .array(userSessionSchema)
