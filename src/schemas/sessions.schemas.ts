@@ -17,6 +17,12 @@ export const userSessionSchema = z.object({
     .date()
     .nullable()
     .describe('The date and time when the session expires'),
+  expiresIn: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullable()
+    .describe('Milliseconds until the session expires'),
   ip: z
     .string()
     .nullable()
