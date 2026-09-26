@@ -3,6 +3,13 @@ import { z } from 'zod';
 
 export type SessionID = 'current' | (string & {});
 
+export enum DeviceType {
+  Desktop = 'DESKTOP',
+  Mobile = 'MOBILE',
+  Tablet = 'TABLET',
+  Unknown = 'UNKNOWN',
+}
+
 /** Create Session Types */
 
 export type CreateSessionData = z.infer<typeof Schemas.createSessionDataSchema>;
@@ -19,3 +26,10 @@ export type RetrieveSessionResponse = z.infer<
 /** Delete Session Types */
 
 export type DeleteSessionResponse = void;
+
+/** List User Sessions Types */
+
+export type UserSession = z.infer<typeof Schemas.userSessionSchema>;
+export type ListUserSessionsResponse = z.infer<
+  typeof Schemas.listUserSessionsResponseSchema
+>;
