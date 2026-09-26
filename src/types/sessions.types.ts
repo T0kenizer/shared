@@ -3,6 +3,13 @@ import { z } from 'zod';
 
 export type SessionID = 'current' | (string & {});
 
+export enum DeviceType {
+  Desktop = 'DESKTOP',
+  Mobile = 'MOBILE',
+  Tablet = 'TABLET',
+  Unknown = 'UNKNOWN',
+}
+
 /** Create Session Types */
 
 export type CreateSessionData = z.infer<typeof Schemas.createSessionDataSchema>;
