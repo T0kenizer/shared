@@ -1,5 +1,5 @@
-import { Plan } from '@/types/plans.types';
 import { UserRole } from '@/types/users.types';
+import { USER_PLANS } from '@constants/plans.constants';
 import * as Constants from '@constants/users.constants';
 import { fileEntitySchema } from '@schemas/files.schemas';
 import { loadableRelation } from '@schemas/utils.schemas';
@@ -16,9 +16,7 @@ export const userEntitySchema = z.object({
     .nullish()
     .describe('The avatar file of the user (uuid, or the file when loaded)'),
   role: z.enum(UserRole).describe('The role of the user'),
-  plan: z
-    .enum([Plan.Free, Plan.Premium])
-    .describe('The subscription plan of the user'),
+  plan: z.enum(USER_PLANS).describe('The subscription plan of the user'),
   createdAt: z.date().describe('The date when the user was created'),
   updatedAt: z.date().describe('The date when the user was last updated'),
   deletedAt: z.date().nullish().describe('The date when the user was deleted'),
