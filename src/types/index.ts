@@ -5,4 +5,5 @@ export * from '@/types/games.types';
 export * from '@/types/password-resets.types';
 export * from '@/types/plans.types';
 export * from '@/types/sessions.types';
+export * from '@/types/subscriptions.types';
 export * from '@/types/users.types';
