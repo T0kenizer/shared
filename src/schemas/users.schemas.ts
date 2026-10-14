@@ -11,6 +11,10 @@ export const userEntitySchema = z.object({
   displayName: z.string().nullish().describe('The display name of the user'),
   email: z.email().describe('The email of the user'),
   password: z.string().nullish().describe('The password of the user'),
+  passwordChangedAt: z
+    .date()
+    .nullish()
+    .describe('The date when the password was last changed'),
   googleId: z.string().nullish().describe('The Google account id of the user'),
   avatar: loadableRelation(fileEntitySchema)
     .nullish()
@@ -27,11 +31,12 @@ export const userEntitySchema = z.object({
 });
 
 export const serializedUserSchema = userEntitySchema
-  .omit({ avatar: true, password: true, googleId: true })
+  .omit({ avatar: true, googleId: true })
   .extend({ avatarUrl: z.url().nullable() })
-  .transform((user) => ({
+  .transform(({ password, ...user }) => ({
     ...user,
     displayName: user.displayName ?? user.username,
+    hasPassword: Boolean(password),
   }));
 
 /** User Input Schemas */
