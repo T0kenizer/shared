@@ -102,7 +102,7 @@ export const seatingPolicySchema = z.object({
     ),
 });
 
-/** Free Mode Rule Schemas */
+/** Sandbox Mode Rule Schemas */
 
 export const actionDefSchema = z.object({
   id: z.string().min(1).describe('The identifier of the action definition'),
@@ -173,7 +173,7 @@ export const pokerGameConfigSchema = z.object({
   rules: pokerRulesSchema,
 });
 
-export const freeGameConfigSchema = z.object({
+export const sandboxGameConfigSchema = z.object({
   mode: z.literal(GameMode.Free),
   seating: seatingPolicySchema,
   economy: economyPolicySchema,
@@ -187,7 +187,7 @@ export const freeGameConfigSchema = z.object({
 
 export const gameConfigSchema = z.discriminatedUnion('mode', [
   pokerGameConfigSchema,
-  freeGameConfigSchema,
+  sandboxGameConfigSchema,
 ]);
 
 export const gameModeDescriptorSchema = z.object({
@@ -359,7 +359,7 @@ export const handSnapshotSchema = z.object({
     .describe('Everything that happened, in order'),
 });
 
-/** Free Mode Snapshot Schemas */
+/** Sandbox Mode Snapshot Schemas */
 
 export const actionSnapshotSchema = z.object({
   id: z.uuid().describe('The runtime identifier of the action'),
@@ -422,7 +422,7 @@ const gameSnapshotBaseSchema = z.object({
     .nonnegative()
     .describe(
       'How many deals the table has got through — hands at a poker table, ' +
-        'rounds at a free one. Counted server-side because the clients only ' +
+        'rounds in a sandbox. Counted server-side because the clients only ' +
         'ever see the deal in front of them: it is the one number the recap ' +
         'at the end cannot work out from the final standings.',
     ),
@@ -456,7 +456,7 @@ export const pokerGameSnapshotSchema = gameSnapshotBaseSchema.extend({
   ),
 });
 
-export const freeGameSnapshotSchema = gameSnapshotBaseSchema.extend({
+export const sandboxGameSnapshotSchema = gameSnapshotBaseSchema.extend({
   mode: z.literal(GameMode.Free),
   currentRound: roundSnapshotSchema
     .nullable()
@@ -465,7 +465,7 @@ export const freeGameSnapshotSchema = gameSnapshotBaseSchema.extend({
 
 export const gameSnapshotSchema = z.discriminatedUnion('mode', [
   pokerGameSnapshotSchema,
-  freeGameSnapshotSchema,
+  sandboxGameSnapshotSchema,
 ]);
 
 export const handPayoutSchema = z.object({
@@ -695,7 +695,7 @@ export const submitActionDataSchema = z
       .min(1)
       .optional()
       .describe(
-        'Free mode: the action to play, as the table declared it in its catalog',
+        'Sandbox mode: the action to play, as the table declared it in its catalog',
       ),
     amount: z
       .number()
@@ -705,7 +705,7 @@ export const submitActionDataSchema = z
       .describe(
         'For a poker bet or raise: the **total** this seat will have ' +
           'committed on this street, matching the min/max of the legal ' +
-          'action. For a free table: the chips this move puts in, required ' +
+          'action. In sandbox mode: the chips this move puts in, required ' +
           'by every action whose `amountForm` is not NONE. Omit for the ' +
           'moves whose amount is not the player’s to choose.',
       ),
@@ -715,7 +715,7 @@ export const submitActionDataSchema = z
     {
       message:
         'Name the move exactly once: `action` at a poker table, ' +
-        '`definitionId` at a free one',
+        '`definitionId` in a sandbox',
       path: ['action'],
     },
   );

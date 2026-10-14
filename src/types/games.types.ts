@@ -59,7 +59,7 @@ export enum HandEndReason {
   Showdown = 'SHOWDOWN',
 }
 
-/** Free Mode Rule Enums */
+/** Sandbox Mode Rule Enums */
 
 export enum PotMode {
   Single = 'SINGLE',
@@ -95,7 +95,7 @@ export enum EndResolution {
   Automatic = 'AUTOMATIC',
 }
 
-/** Free Mode Runtime Enums */
+/** Sandbox Mode Runtime Enums */
 
 export enum RoundStatus {
   Init = 'INIT',
@@ -167,7 +167,7 @@ export type EconomyPolicy = z.infer<typeof Schemas.economyPolicySchema>;
 export type TurnPolicy = z.infer<typeof Schemas.turnPolicySchema>;
 export type EndCondition = z.infer<typeof Schemas.endConditionSchema>;
 export type EndPolicy = z.infer<typeof Schemas.endPolicySchema>;
-export type FreeGameConfig = z.infer<typeof Schemas.freeGameConfigSchema>;
+export type SandboxGameConfig = z.infer<typeof Schemas.sandboxGameConfigSchema>;
 export type GameConfig = z.infer<typeof Schemas.gameConfigSchema>;
 export type GameModeDescriptor = z.infer<
   typeof Schemas.gameModeDescriptorSchema
@@ -190,7 +190,9 @@ export type HandSnapshot = z.infer<typeof Schemas.handSnapshotSchema>;
 export type ActionSnapshot = z.infer<typeof Schemas.actionSnapshotSchema>;
 export type RoundSnapshot = z.infer<typeof Schemas.roundSnapshotSchema>;
 export type PokerGameSnapshot = z.infer<typeof Schemas.pokerGameSnapshotSchema>;
-export type FreeGameSnapshot = z.infer<typeof Schemas.freeGameSnapshotSchema>;
+export type SandboxGameSnapshot = z.infer<
+  typeof Schemas.sandboxGameSnapshotSchema
+>;
 export type GameSnapshot = z.infer<typeof Schemas.gameSnapshotSchema>;
 export type HandPayout = z.infer<typeof Schemas.handPayoutSchema>;
 export type PotAward = z.infer<typeof Schemas.potAwardSchema>;
