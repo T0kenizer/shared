@@ -200,7 +200,10 @@ export const gameModeDescriptorSchema = z.object({
   defaults: gameConfigSchema.describe('The table this mode opens with'),
 });
 
-export const listGameModesResponseSchema = z.array(gameModeDescriptorSchema);
+export const listGameModesResponseSchema = z.record(
+  z.enum(GameMode),
+  gameModeDescriptorSchema,
+);
 
 /** Game Snapshot Schemas */
 
