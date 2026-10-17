@@ -1,5 +1,5 @@
 import { GameMode } from '@/types/games.types';
-import { Feature, Plan } from '@/types/plans.types';
+import { BillingInterval, Feature, Offer, Plan } from '@/types/plans.types';
 import { z } from 'zod';
 
 export const featureMetadataSchemas = {
@@ -24,16 +24,21 @@ export const planPriceSchema = z.object({
     .describe('The price in the smallest currency unit (e.g. cents)'),
   currency: z.string().describe('The ISO 4217 currency code, lowercase'),
   interval: z
-    .enum(['month', 'year'])
+    .enum(BillingInterval)
     .nullable()
     .describe('The billing period, or null when the plan is paid once'),
 });
 
+export const planOfferSchema = z.object({
+  offer: z.enum(Offer).describe('The offer to send to Checkout'),
+  price: planPriceSchema.describe('What the offer costs'),
+});
+
 export const planSchema = z.object({
   features: planMetadataSchema.describe('What the plan grants'),
-  price: planPriceSchema
-    .nullable()
-    .describe('What the plan costs, or null when it is not sold'),
+  offers: z
+    .array(planOfferSchema)
+    .describe('The offers the plan is sold through, empty when it is not sold'),
 });
 
 /** List Plans Schemas */
