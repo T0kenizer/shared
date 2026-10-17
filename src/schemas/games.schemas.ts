@@ -18,11 +18,7 @@ import {
   Street,
   TurnRegime,
 } from '@/types/games.types';
-import {
-  JOIN_CODE_REGEX,
-  MAX_SEATS,
-  MIN_SEATS,
-} from '@constants/games.constants';
+import * as Constants from '@constants/games.constants';
 import { z } from 'zod';
 
 /** Poker Rule Schemas */
@@ -77,8 +73,8 @@ export const seatDeclarationSchema = z.object({
 export const seatingPolicySchema = z.object({
   seats: z
     .array(seatDeclarationSchema)
-    .min(MIN_SEATS)
-    .max(MAX_SEATS)
+    .min(Constants.MIN_SEATS)
+    .max(Constants.MAX_SEATS)
     .describe('The seats the session opens with (host seat included)'),
   defaultInitialBalance: z
     .number()
@@ -401,7 +397,7 @@ export const roundSnapshotSchema = z.object({
 
 export const joinCodeSchema = z
   .string()
-  .regex(JOIN_CODE_REGEX, 'The join code is 6 digits');
+  .regex(Constants.JOIN_CODE_REGEX, 'The join code is 6 digits');
 
 const gameSnapshotBaseSchema = z.object({
   id: z.uuid().describe('The unique identifier of the game session'),
@@ -521,8 +517,8 @@ export const createGameSessionDataSchema = z
       ),
     seats: z
       .array(seatDeclarationSchema)
-      .min(MIN_SEATS)
-      .max(MAX_SEATS)
+      .min(Constants.MIN_SEATS)
+      .max(Constants.MAX_SEATS)
       .optional()
       .describe(
         "Seats to open with instead of the mode's defaults; mutually " +

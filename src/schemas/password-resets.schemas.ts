@@ -1,5 +1,5 @@
+import { createUserDataSchema } from '@schemas/users.schemas';
 import { z } from 'zod';
-import { createUserDataSchema } from './users.schemas';
 
 /** Request Reset Schemas */
 
