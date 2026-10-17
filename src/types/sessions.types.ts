@@ -29,7 +29,7 @@ export type DeleteSessionResponse = void;
 
 /** List User Sessions Types */
 
-export type UserSession = z.infer<typeof Schemas.userSessionSchema>;
+export type Session = ListUserSessionsResponse[number];
 export type ListUserSessionsResponse = z.infer<
   typeof Schemas.listUserSessionsResponseSchema
 >;
