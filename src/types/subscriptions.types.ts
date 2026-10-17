@@ -1,9 +1,26 @@
 import * as Schemas from '@schemas/subscriptions.schemas';
 import { z } from 'zod';
 
-export type SubscriptionStatus = z.infer<
-  typeof Schemas.subscriptionStatusSchema
->;
+export enum SubscriptionStatus {
+  Active = 'active',
+  Trialing = 'trialing',
+  PastDue = 'past_due',
+  Unpaid = 'unpaid',
+  Paused = 'paused',
+  Canceled = 'canceled',
+  Incomplete = 'incomplete',
+  IncompleteExpired = 'incomplete_expired',
+}
+
+export enum CheckoutStatus {
+  Success = 'success',
+  Cancelled = 'cancelled',
+}
+
+export enum CheckoutError {
+  Unauthenticated = 'unauthenticated',
+  Failed = 'failed',
+}
 
 export type Subscription = z.infer<typeof Schemas.subscriptionSchema>;
 

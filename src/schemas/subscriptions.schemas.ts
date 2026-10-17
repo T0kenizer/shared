@@ -1,23 +1,13 @@
 import { Plan } from '@/types/plans.types';
+import { SubscriptionStatus } from '@/types/subscriptions.types';
 import { planPriceSchema } from '@schemas/plans.schemas';
 import { z } from 'zod';
-
-export const subscriptionStatusSchema = z.enum([
-  'active',
-  'trialing',
-  'past_due',
-  'unpaid',
-  'paused',
-  'canceled',
-  'incomplete',
-  'incomplete_expired',
-]);
 
 export const subscriptionSchema = z.object({
   plan: z
     .enum([Plan.Premium, Plan.Founder])
     .describe('The plan the subscription grants'),
-  status: subscriptionStatusSchema.describe('The Stripe subscription status'),
+  status: z.enum(SubscriptionStatus).describe('The Stripe subscription status'),
   price: planPriceSchema.describe('What the subscription renews at'),
   currentPeriodEnd: z
     .date()
