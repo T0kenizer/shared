@@ -1,12 +1,12 @@
-import { Plan } from '@/types/plans.types';
+import { Offer } from '@/types/plans.types';
 import { SubscriptionStatus } from '@/types/subscriptions.types';
 import { planPriceSchema } from '@schemas/plans.schemas';
 import { z } from 'zod';
 
 export const subscriptionSchema = z.object({
-  plan: z
-    .enum([Plan.Premium, Plan.Founder])
-    .describe('The plan the subscription grants'),
+  offer: z
+    .enum(Offer)
+    .describe('The offer the subscription was bought through'),
   status: z.enum(SubscriptionStatus).describe('The Stripe subscription status'),
   price: planPriceSchema.describe('What the subscription renews at'),
   currentPeriodEnd: z
