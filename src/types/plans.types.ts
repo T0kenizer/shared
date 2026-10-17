@@ -11,9 +11,6 @@ export enum Plan {
 /** A plan that can be stored on a user. */
 export type UserPlan = Exclude<Plan, Plan.Anonymous>;
 
-/** A plan that is bought. */
-export type PaidPlan = Exclude<UserPlan, Plan.Free>;
-
 export enum Feature {
   JoinGame = 'JOIN_GAME',
   CreateGame = 'CREATE_GAME',
