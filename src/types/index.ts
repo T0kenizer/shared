@@ -7,3 +7,8 @@ export * from '@/types/plans.types';
 export * from '@/types/sessions.types';
 export * from '@/types/subscriptions.types';
 export * from '@/types/users.types';
+
+export enum SortOrder {
+  Asc = 'asc',
+  Desc = 'desc',
+}
