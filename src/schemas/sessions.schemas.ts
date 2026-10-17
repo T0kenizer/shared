@@ -1,5 +1,7 @@
 import { DeviceType } from '@/types/sessions.types';
+import * as Constants from '@constants/sessions.constants';
 import { serializedUserSchema } from '@schemas/users.schemas';
+import { listQuerySchema, listResponseSchema } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
 const baseSessionSchema = z.object({
@@ -74,8 +76,10 @@ export const createSessionResponseSchema = sessionSchema(true);
 
 export const retrieveSessionResponseSchema = sessionSchema(true);
 
-/** List User Sessions Schemas */
+/** List Sessions Schemas */
 
-export const listUserSessionsResponseSchema = z
-  .array(sessionSchema())
-  .describe('The active sessions of the user, most recently active first');
+export const listSessionsQuerySchema = listQuerySchema([], {
+  defaultLimit: Constants.LIST_SESSIONS_DEFAULT_LIMIT,
+  maxLimit: Constants.LIST_SESSIONS_MAX_LIMIT,
+});
+export const listSessionsResponseSchema = listResponseSchema(sessionSchema());

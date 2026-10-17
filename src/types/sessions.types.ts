@@ -27,9 +27,10 @@ export type RetrieveSessionResponse = z.infer<
 
 export type DeleteSessionResponse = void;
 
-/** List User Sessions Types */
+/** List Sessions Types */
 
-export type Session = ListUserSessionsResponse[number];
-export type ListUserSessionsResponse = z.infer<
-  typeof Schemas.listUserSessionsResponseSchema
+export type Session = ListSessionsResponse['items'][number];
+export type ListSessionsQuery = z.infer<typeof Schemas.listSessionsQuerySchema>;
+export type ListSessionsResponse = z.infer<
+  typeof Schemas.listSessionsResponseSchema
 >;
