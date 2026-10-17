@@ -1,6 +1,8 @@
 import { Offer } from '@/types/plans.types';
 import { SubscriptionStatus } from '@/types/subscriptions.types';
+import * as Constants from '@constants/subscriptions.constants';
 import { planPriceSchema } from '@schemas/plans.schemas';
+import { listQuerySchema, listResponseSchema } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
 export const subscriptionSchema = z.object({
@@ -67,7 +69,11 @@ export const resumeSubscriptionResponseSchema = subscriptionSchema;
 
 /** List Invoices Schemas */
 
-export const listInvoicesResponseSchema = z.array(invoiceSchema);
+export const listInvoicesQuerySchema = listQuerySchema([], {
+  defaultLimit: Constants.LIST_INVOICES_DEFAULT_LIMIT,
+  maxLimit: Constants.LIST_INVOICES_MAX_LIMIT,
+});
+export const listInvoicesResponseSchema = listResponseSchema(invoiceSchema);
 
 /** Retrieve Payment Method Schemas */
 

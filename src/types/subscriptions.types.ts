@@ -50,6 +50,7 @@ export type ResumeSubscriptionResponse = z.infer<
 
 /** List Invoices Types */
 
+export type ListInvoicesQuery = z.infer<typeof Schemas.listInvoicesQuerySchema>;
 export type ListInvoicesResponse = z.infer<
   typeof Schemas.listInvoicesResponseSchema
 >;
