@@ -1,5 +1,5 @@
-import { Plan } from '@/types/plans.types';
 import { UserRole } from '@/types/users.types';
+import { USER_PLANS } from '@constants/plans.constants';
 import * as Constants from '@constants/users.constants';
 import { fileEntitySchema } from '@schemas/files.schemas';
 import { loadableRelation } from '@schemas/utils.schemas';
@@ -11,14 +11,16 @@ export const userEntitySchema = z.object({
   displayName: z.string().nullish().describe('The display name of the user'),
   email: z.email().describe('The email of the user'),
   password: z.string().nullish().describe('The password of the user'),
+  passwordChangedAt: z
+    .date()
+    .nullish()
+    .describe('The date when the password was last changed'),
   googleId: z.string().nullish().describe('The Google account id of the user'),
   avatar: loadableRelation(fileEntitySchema)
     .nullish()
     .describe('The avatar file of the user (uuid, or the file when loaded)'),
   role: z.enum(UserRole).describe('The role of the user'),
-  plan: z
-    .enum([Plan.Free, Plan.Premium])
-    .describe('The subscription plan of the user'),
+  plan: z.enum(USER_PLANS).describe('The subscription plan of the user'),
   createdAt: z.date().describe('The date when the user was created'),
   updatedAt: z.date().describe('The date when the user was last updated'),
   deletedAt: z.date().nullish().describe('The date when the user was deleted'),
@@ -29,11 +31,12 @@ export const userEntitySchema = z.object({
 });
 
 export const serializedUserSchema = userEntitySchema
-  .omit({ avatar: true, password: true, googleId: true })
+  .omit({ avatar: true, googleId: true })
   .extend({ avatarUrl: z.url().nullable() })
-  .transform((user) => ({
+  .transform(({ password, ...user }) => ({
     ...user,
     displayName: user.displayName ?? user.username,
+    hasPassword: Boolean(password),
   }));
 
 /** User Input Schemas */

@@ -3,5 +3,7 @@ export * from '@schemas/account-deletions.schemas';
 export * from '@schemas/files.schemas';
 export * from '@schemas/games.schemas';
 export * from '@schemas/password-resets.schemas';
+export * from '@schemas/plans.schemas';
 export * from '@schemas/sessions.schemas';
+export * from '@schemas/subscriptions.schemas';
 export * from '@schemas/users.schemas';

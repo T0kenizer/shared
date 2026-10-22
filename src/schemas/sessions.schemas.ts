@@ -1,8 +1,10 @@
 import { DeviceType } from '@/types/sessions.types';
+import * as Constants from '@constants/sessions.constants';
 import { serializedUserSchema } from '@schemas/users.schemas';
+import { listQuerySchema, listResponseSchema } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
-export const userSessionSchema = z.object({
+const baseSessionSchema = z.object({
   id: z
     .string()
     .describe('An opaque identifier of the session, stable across requests'),
@@ -46,10 +48,15 @@ export const userSessionSchema = z.object({
     .describe('The approximate location of the last request, when known'),
 });
 
-// The current session, as described in the listing, along with its user.
-export const sessionSchema = userSessionSchema.extend({
-  user: serializedUserSchema,
+const sessionWithUserSchema = baseSessionSchema.extend({
+  user: serializedUserSchema.describe('The user of the session'),
 });
+
+export function sessionSchema(includeUser: true): typeof sessionWithUserSchema;
+export function sessionSchema(includeUser?: false): typeof baseSessionSchema;
+export function sessionSchema(includeUser = false) {
+  return includeUser ? sessionWithUserSchema : baseSessionSchema;
+}
 
 /** Create Session Schemas */
 
@@ -63,14 +70,16 @@ export const createSessionDataSchema = z.object({
       'Whether the session should roll forward with activity instead of expiring at a fixed deadline',
     ),
 });
-export const createSessionResponseSchema = sessionSchema;
+export const createSessionResponseSchema = sessionSchema(true);
 
 /** Retrieve Session Schemas */
 
-export const retrieveSessionResponseSchema = sessionSchema;
+export const retrieveSessionResponseSchema = sessionSchema(true);
 
-/** List User Sessions Schemas */
+/** List Sessions Schemas */
 
-export const listUserSessionsResponseSchema = z
-  .array(userSessionSchema)
-  .describe('The active sessions of the user, most recently active first');
+export const listSessionsQuerySchema = listQuerySchema([], {
+  defaultLimit: Constants.LIST_SESSIONS_DEFAULT_LIMIT,
+  maxLimit: Constants.LIST_SESSIONS_MAX_LIMIT,
+});
+export const listSessionsResponseSchema = listResponseSchema(sessionSchema());
