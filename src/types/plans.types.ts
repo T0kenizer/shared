@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/plans.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/plans.schemas';
+import type { z } from 'zod';
 
 export enum Plan {
   Anonymous = 'ANONYMOUS',

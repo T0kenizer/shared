@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/games.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/games.schemas';
+import type { z } from 'zod';
 
 export enum GameMode {
   Poker = 'POKER',

@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/sessions.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/sessions.schemas';
+import type { z } from 'zod';
 
 export type SessionID = 'current' | (string & {});
 

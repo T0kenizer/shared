@@ -1,9 +1,9 @@
 import { GameMode } from '@/types/games.types';
 import {
   Feature,
-  FeatureMetadataMap,
+  type FeatureMetadataMap,
   Plan,
-  PlansMetadata,
+  type PlansMetadata,
 } from '@/types/plans.types';
 
 export function featureMetadata<F extends Feature>(

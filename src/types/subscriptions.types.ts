@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/subscriptions.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/subscriptions.schemas';
+import type { z } from 'zod';
 
 export enum SubscriptionStatus {
   Active = 'active',

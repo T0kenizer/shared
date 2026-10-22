@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/users.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/users.schemas';
+import type { z } from 'zod';
 
 export enum UserRole {
   User = 'USER',
