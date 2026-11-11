@@ -1,5 +1,5 @@
 import { GameMode } from '@/types/games.types';
-import { BillingInterval, Feature, Offer, Plan } from '@/types/plans.types';
+import { Feature, Plan } from '@/types/plans.types';
 import { z } from 'zod';
 
 export const featureMetadataSchemas = {
@@ -12,33 +12,21 @@ export const featureMetadataSchemas = {
       .array(z.enum(GameMode))
       .describe('The game modes the plan can create'),
     maxSeats: z.number().int().describe('The most seats a table can hold'),
+    maxActiveGames: z
+      .preprocess(
+        (value) => value ?? Infinity,
+        z.number().int().nonnegative().or(z.literal(Infinity)),
+      )
+      .describe(
+        'The most games the plan can have running at once, null when unlimited',
+      ),
   }),
 };
 
 export const planMetadataSchema = z.object(featureMetadataSchemas);
 
-export const planPriceSchema = z.object({
-  amount: z
-    .number()
-    .int()
-    .describe('The price in the smallest currency unit (e.g. cents)'),
-  currency: z.string().describe('The ISO 4217 currency code, lowercase'),
-  interval: z
-    .enum(BillingInterval)
-    .nullable()
-    .describe('The billing period, or null when the plan is paid once'),
-});
-
-export const planOfferSchema = z.object({
-  offer: z.enum(Offer).describe('The offer to send to Checkout'),
-  price: planPriceSchema.describe('What the offer costs'),
-});
-
 export const planSchema = z.object({
   features: planMetadataSchema.describe('What the plan grants'),
-  offers: z
-    .array(planOfferSchema)
-    .describe('The offers the plan is sold through, empty when it is not sold'),
 });
 
 /** List Plans Schemas */

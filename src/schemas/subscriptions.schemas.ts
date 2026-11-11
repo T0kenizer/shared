@@ -1,7 +1,8 @@
-import { Offer } from '@/types/plans.types';
+import { Offer } from '@/types/offers.types';
 import { SubscriptionStatus } from '@/types/subscriptions.types';
+import { USER_PLANS } from '@constants/plans.constants';
 import * as Constants from '@constants/subscriptions.constants';
-import { planPriceSchema } from '@schemas/plans.schemas';
+import { offerPriceSchema } from '@schemas/offers.schemas';
 import { listQuerySchema, listResponseSchema } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
@@ -9,8 +10,9 @@ export const subscriptionSchema = z.object({
   offer: z
     .enum(Offer)
     .describe('The offer the subscription was bought through'),
+  plan: z.enum(USER_PLANS).describe('The plan the subscription grants'),
   status: z.enum(SubscriptionStatus).describe('The Stripe subscription status'),
-  price: planPriceSchema.describe('What the subscription renews at'),
+  price: offerPriceSchema.describe('What the subscription renews at'),
   currentPeriodEnd: z
     .date()
     .describe('The date when the current billing period ends'),
