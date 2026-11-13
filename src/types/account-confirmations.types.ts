@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/account-confirmations.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/account-confirmations.schemas';
+import type { z } from 'zod';
 
 /** Request Confirmation Types */
 

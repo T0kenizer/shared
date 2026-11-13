@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/password-resets.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/password-resets.schemas';
+import type { z } from 'zod';
 
 /** Request Reset Types */
 

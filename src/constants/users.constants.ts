@@ -1,4 +1,4 @@
-import { PasswordRule, UserRole } from '@/types/users.types';
+import { type PasswordRule, UserRole } from '@/types/users.types';
 
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 64;

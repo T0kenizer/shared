@@ -1,0 +1,2 @@
+export const LIST_SESSIONS_DEFAULT_LIMIT = 20;
+export const LIST_SESSIONS_MAX_LIMIT = 100;
