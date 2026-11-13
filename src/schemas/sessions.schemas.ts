@@ -25,10 +25,6 @@ const baseSessionSchema = z.object({
     .nonnegative()
     .nullable()
     .describe('Milliseconds until the session expires'),
-  ip: z
-    .string()
-    .nullable()
-    .describe('The IP address of the last request made with the session'),
   device: z.object({
     type: z.enum(DeviceType).describe('The kind of device'),
     os: z.string().nullable().describe('The operating system, with version'),
