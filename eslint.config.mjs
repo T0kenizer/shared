@@ -1,18 +1,12 @@
-import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import { defineConfig, globalIgnores } from 'eslint/config';
-import tseslint from 'typescript-eslint';
+import tokenizer from './eslint/index.mjs';
 
 export default defineConfig([
   globalIgnores(['dist/**', 'node_modules/**']),
   {
     files: ['**/*.ts'],
-    extends: [
-      eslint.configs.recommended,
-      tseslint.configs.recommendedTypeChecked,
-      tseslint.configs.recommendedTypeCheckedOnly,
-      eslintPluginPrettierRecommended,
-    ],
+    extends: [tokenizer.configs.recommended, eslintPluginPrettierRecommended],
     languageOptions: {
       parserOptions: {
         projectService: {

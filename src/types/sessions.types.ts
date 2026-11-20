@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/sessions.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/sessions.schemas';
+import type { z } from 'zod';
 
 export type SessionID = 'current' | (string & {});
 
@@ -27,9 +27,10 @@ export type RetrieveSessionResponse = z.infer<
 
 export type DeleteSessionResponse = void;
 
-/** List User Sessions Types */
+/** List Sessions Types */
 
-export type UserSession = z.infer<typeof Schemas.userSessionSchema>;
-export type ListUserSessionsResponse = z.infer<
-  typeof Schemas.listUserSessionsResponseSchema
+export type Session = ListSessionsResponse['items'][number];
+export type ListSessionsQuery = z.infer<typeof Schemas.listSessionsQuerySchema>;
+export type ListSessionsResponse = z.infer<
+  typeof Schemas.listSessionsResponseSchema
 >;

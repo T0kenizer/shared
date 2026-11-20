@@ -1,5 +1,5 @@
-import * as Schemas from '@schemas/files.schemas';
-import { z } from 'zod';
+import type * as Schemas from '@schemas/files.schemas';
+import type { z } from 'zod';
 
 export enum FileStatus {
   Pending = 'PENDING',

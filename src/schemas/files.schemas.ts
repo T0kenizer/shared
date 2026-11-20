@@ -1,4 +1,4 @@
-import { FileStatus, FileUploadMode } from '@/types/files.types';
+import * as Types from '@/types/files.types';
 import { loadableRelation } from '@schemas/utils.schemas';
 import { z } from 'zod';
 
@@ -15,7 +15,9 @@ export const fileEntitySchema = z.object({
     .string()
     .nullish()
     .describe('The sha256 checksum of the file'),
-  status: z.enum(FileStatus).describe('The processing status of the file'),
+  status: z
+    .enum(Types.FileStatus)
+    .describe('The processing status of the file'),
   createdBy: loadableRelation(z.object({ uuid: z.uuid() }))
     .nullish()
     .describe('The uploader of the file (uuid, or the user when loaded)'),
@@ -41,8 +43,8 @@ export const serializedFileSchema = fileEntitySchema
 
 export const createFileQuerySchema = z.object({
   mode: z
-    .enum(FileUploadMode)
-    .default(FileUploadMode.Sync)
+    .enum(Types.FileUploadMode)
+    .default(Types.FileUploadMode.Sync)
     .describe(
       'Whether the content is stored before responding (sync) or in the background (async)',
     ),
